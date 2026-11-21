@@ -1,0 +1,8 @@
+node_modules
+.next
+drizzle
+public
+dist
+*.min.js
+pnpm-lock.yaml
+plan.md
