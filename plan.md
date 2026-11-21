@@ -38,7 +38,7 @@ Start a fresh chat for each phase if the agent gets confused. Commit to git afte
 - [x] Phase 3: Database (Neon + PostGIS + Drizzle)
 - [x] Phase 4: Authentication and roles
 - [x] Phase 5: Merchant registration and Google Maps link extraction
-- [ ] Phase 6: Admin dashboard and merchant verification
+- [x] Phase 6: Admin dashboard and merchant verification
 - [ ] Phase 7: Secure document storage and vault
 - [ ] Phase 8: Map and nearby shops (customer)
 - [ ] Phase 9: Print requests (customer side)
