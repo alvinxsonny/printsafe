@@ -9,3 +9,7 @@ export const LocationPickerMap = dynamic(() => import("./LocationPickerMap"), {
 export const ShopReviewMap = dynamic(() => import("./ShopReviewMap"), {
   ssr: false,
 });
+
+export const ShopMap = dynamic(() => import("./ShopMap"), {
+  ssr: false,
+});

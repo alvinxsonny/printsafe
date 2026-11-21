@@ -1,6 +1,7 @@
-import { sql } from "drizzle-orm";
+import { sql, inArray, and } from "drizzle-orm";
 import { db } from "./client";
-import type { shops, shopHours, shopSubscriptions } from "./schema";
+import { shopHours, printJobs } from "./schema";
+import type { shops, shopSubscriptions } from "./schema";
 
 export type Shop = typeof shops.$inferSelect;
 export type ShopHours = typeof shopHours.$inferSelect;
@@ -180,4 +181,220 @@ export async function findLiveShopsNear(
 
   const results = await db.execute(query);
   return results.rows as unknown as NearbyShopResult[];
+}
+
+export interface NearbyShopDetail {
+  id: string;
+  name: string;
+  addressLine: string;
+  locality: string | null;
+  city: string;
+  priceBwPaise: number;
+  priceColorPaise: number;
+  services: {
+    bw: boolean;
+    color: boolean;
+    a3: boolean;
+    duplex: boolean;
+  };
+  latitude: number | null;
+  longitude: number | null;
+  distanceMeters: number;
+  isLive: boolean;
+  capacityState: "normal" | "busy" | "at_capacity";
+  hours: { weekday: number; opens: string; closes: string }[];
+  phone: string | null;
+}
+
+/**
+ * Queries nearby approved shops within radiusM meters, computes their real-time live status
+ * and capacity state, and filters out offline shops unless includeClosed is true.
+ * Privacy rule: Never exposes owner details or private merchant phone numbers.
+ */
+export async function findNearbyShops(params: {
+  lat: number;
+  lng: number;
+  radiusM?: number;
+  includeClosed?: boolean;
+}): Promise<NearbyShopDetail[]> {
+  const { lat, lng, radiusM = 5000, includeClosed = false } = params;
+
+  const query = sql<{
+    id: string;
+    name: string;
+    addressLine: string;
+    locality: string | null;
+    city: string;
+    priceBwPaise: number;
+    priceColorPaise: number;
+    services: { bw: boolean; color: boolean; a3: boolean; duplex: boolean };
+    latitude: number | null;
+    longitude: number | null;
+    status: string;
+    manualLive: boolean;
+    scheduleEnabled: boolean;
+    contactPhone: string | null;
+    showPhone: boolean;
+    subscriptionStatus: string;
+    subscriptionPeriodEnd: Date | string;
+    distanceMeters: number;
+  }>`
+    SELECT 
+      s.id,
+      s.name,
+      s.address_line as "addressLine",
+      s.locality,
+      s.city,
+      s.price_bw_paise as "priceBwPaise",
+      s.price_color_paise as "priceColorPaise",
+      s.services,
+      s.latitude,
+      s.longitude,
+      s.status,
+      s.manual_live as "manualLive",
+      s.schedule_enabled as "scheduleEnabled",
+      s.contact_phone as "contactPhone",
+      s.show_phone as "showPhone",
+      sub.status as "subscriptionStatus",
+      sub.period_end as "subscriptionPeriodEnd",
+      ROUND(ST_Distance(
+        s.location::geography,
+        ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
+      )) as "distanceMeters"
+    FROM shops s
+    JOIN shop_subscriptions sub ON sub.shop_id = s.id
+    WHERE s.status = 'approved'
+      AND sub.status IN ('trial', 'active', 'grace')
+      AND sub.period_end > NOW()
+      AND ST_DWithin(
+        s.location::geography,
+        ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
+        ${radiusM}
+      )
+    ORDER BY "distanceMeters" ASC
+  `;
+
+  const results = await db.execute(query);
+  const rows = results.rows as unknown as {
+    id: string;
+    name: string;
+    addressLine: string;
+    locality: string | null;
+    city: string;
+    priceBwPaise: number;
+    priceColorPaise: number;
+    services: { bw: boolean; color: boolean; a3: boolean; duplex: boolean };
+    latitude: number | null;
+    longitude: number | null;
+    status: string;
+    manualLive: boolean;
+    scheduleEnabled: boolean;
+    contactPhone: string | null;
+    showPhone: boolean;
+    subscriptionStatus: string;
+    subscriptionPeriodEnd: Date | string;
+    distanceMeters: number;
+  }[];
+
+  if (rows.length === 0) return [];
+
+  const shopIds = rows.map((r) => r.id);
+
+  // Fetch shop hours
+  const hoursRows = await db
+    .select({
+      shopId: shopHours.shopId,
+      weekday: shopHours.weekday,
+      opens: shopHours.opens,
+      closes: shopHours.closes,
+    })
+    .from(shopHours)
+    .where(inArray(shopHours.shopId, shopIds));
+
+  // Fetch active jobs per shop
+  const activeJobs = await db
+    .select({
+      shopId: printJobs.shopId,
+      count: sql<number>`count(*)`,
+    })
+    .from(printJobs)
+    .where(
+      and(
+        inArray(printJobs.shopId, shopIds),
+        inArray(printJobs.status, ["requested", "accepted", "unlocked"])
+      )
+    )
+    .groupBy(printJobs.shopId);
+
+  const activeJobsMap = new Map<string, number>();
+  for (const aj of activeJobs) {
+    activeJobsMap.set(aj.shopId, Number(aj.count));
+  }
+
+  const hoursMap = new Map<
+    string,
+    { weekday: number; opens: string; closes: string }[]
+  >();
+  for (const h of hoursRows) {
+    const list = hoursMap.get(h.shopId) || [];
+    list.push({ weekday: h.weekday, opens: h.opens, closes: h.closes });
+    hoursMap.set(h.shopId, list);
+  }
+
+  const nearbyShops: NearbyShopDetail[] = [];
+  const now = new Date();
+
+  for (const row of rows) {
+    const shopHoursList = hoursMap.get(row.id) || [];
+    const isLive = isShopLive(
+      {
+        status: row.status,
+        manualLive: row.manualLive,
+        scheduleEnabled: row.scheduleEnabled,
+      },
+      shopHoursList,
+      {
+        status: row.subscriptionStatus,
+        periodEnd: row.subscriptionPeriodEnd,
+      },
+      now
+    );
+
+    if (!includeClosed && !isLive) {
+      continue;
+    }
+
+    const jobCount = activeJobsMap.get(row.id) || 0;
+    let capacityState: "normal" | "busy" | "at_capacity" = "normal";
+    if (jobCount >= 10) {
+      capacityState = "at_capacity";
+    } else if (jobCount >= 5) {
+      capacityState = "busy";
+    }
+
+    nearbyShops.push({
+      id: row.id,
+      name: row.name,
+      addressLine: row.addressLine,
+      locality: row.locality,
+      city: row.city,
+      priceBwPaise: Number(row.priceBwPaise),
+      priceColorPaise: Number(row.priceColorPaise),
+      services: row.services || {
+        bw: true,
+        color: true,
+        a3: false,
+        duplex: true,
+      },
+      latitude: row.latitude,
+      longitude: row.longitude,
+      distanceMeters: Number(row.distanceMeters),
+      isLive,
+      capacityState,
+      hours: shopHoursList,
+      phone: row.showPhone ? row.contactPhone : null,
+    });
+  }
+
+  return nearbyShops;
 }

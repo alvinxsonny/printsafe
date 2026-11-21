@@ -40,7 +40,7 @@ Start a fresh chat for each phase if the agent gets confused. Commit to git afte
 - [x] Phase 5: Merchant registration and Google Maps link extraction
 - [x] Phase 6: Admin dashboard and merchant verification
 - [x] Phase 7: Secure document storage and vault
-- [ ] Phase 8: Map and nearby shops (customer)
+- [x] Phase 8: Map and nearby shops (customer)
 - [ ] Phase 9: Print requests (customer side)
 - [ ] Phase 10: Merchant dashboard (live toggle, prices, queue)
 - [ ] Phase 11: Secure viewer and print

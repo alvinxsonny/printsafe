@@ -1,5 +1,6 @@
 import { env } from "@/lib/env";
 import type { ShopExtractionItem } from "@/lib/db/schema/shops";
+import { throttleNominatim } from "./throttle";
 
 interface ReverseGeocodeResult {
   addressLine: string;
@@ -18,31 +19,6 @@ interface ReverseGeocodeResult {
 
 // In-memory cache for coordinates (~1m precision with 5 decimals)
 const geoCache = new Map<string, ReverseGeocodeResult>();
-
-// Strict throttle to obey Nominatim's 1 request per second usage policy
-let lastNominatimRequestTime = 0;
-let requestQueue = Promise.resolve();
-
-async function throttleNominatim(): Promise<void> {
-  const currentQueue = requestQueue;
-  let release: () => void;
-  requestQueue = new Promise((resolve) => {
-    release = resolve;
-  });
-
-  await currentQueue;
-
-  const now = Date.now();
-  const timeSinceLast = now - lastNominatimRequestTime;
-  const waitMs = Math.max(0, 1100 - timeSinceLast);
-
-  if (waitMs > 0) {
-    await new Promise((res) => setTimeout(res, waitMs));
-  }
-
-  lastNominatimRequestTime = Date.now();
-  release!();
-}
 
 /**
  * Reverse geocodes coordinates via Nominatim proxy and optionally enriches via Overpass.
