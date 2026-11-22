@@ -23,6 +23,13 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   serverExternalPackages: ["@napi-rs/canvas", "pdfjs-dist", "sharp"],
+  outputFileTracingIncludes: {
+    "/api/**/*": [
+      "./node_modules/@napi-rs/canvas/**/*",
+      "./node_modules/@napi-rs/canvas-*/**/*",
+      "./node_modules/pdfjs-dist/**/*",
+    ],
+  },
   turbopack: {
     rules: {
       "*.css": {

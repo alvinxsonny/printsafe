@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -253,12 +253,9 @@ export function DocumentInspectorClient({
                     </Badge>
                   </div>
                   <div className="flex justify-center bg-white rounded-lg p-2 shadow-inner min-h-[300px] items-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`/api/documents/${doc.id}/pages/${pNum}`}
-                      alt={`Page ${pNum} preview`}
-                      className="max-h-[600px] w-auto object-contain rounded shadow-sm border border-neutral-200"
-                      loading="lazy"
+                    <DocumentPagePreview
+                      documentId={doc.id}
+                      pageNo={pNum}
                     />
                   </div>
                 </Card3D>
@@ -423,5 +420,98 @@ export function DocumentInspectorClient({
         </div>
       </div>
     </CustomerShell>
+  );
+}
+
+function DocumentPagePreview({
+  documentId,
+  pageNo,
+}: {
+  documentId: string;
+  pageNo: number;
+}) {
+  const [useFallback, setUseFallback] = useState(false);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+  const [fallbackError, setFallbackError] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const handleFallback = async () => {
+    setUseFallback(true);
+    setFallbackLoading(true);
+    setFallbackError(null);
+    try {
+      const res = await fetch(`/api/documents/${documentId}/pdf`);
+      if (!res.ok) throw new Error("Failed to load PDF document");
+      const pdfBytes = await res.arrayBuffer();
+      const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+      const loadingTask = pdfjsLib.getDocument({
+        data: new Uint8Array(pdfBytes),
+        useSystemFonts: true,
+        disableFontFace: false,
+      });
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(pageNo);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+        }
+      }
+    } catch (err: unknown) {
+      setFallbackError(
+        err instanceof Error ? err.message : "Failed to load page"
+      );
+    } finally {
+      setFallbackLoading(false);
+    }
+  };
+
+  if (useFallback) {
+    if (fallbackLoading) {
+      return (
+        <div className="h-64 flex flex-col items-center justify-center gap-2 text-[var(--text-muted)]">
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--accent)]" />
+          <span className="text-xs">Rendering page {pageNo}...</span>
+        </div>
+      );
+    }
+    if (fallbackError) {
+      return (
+        <div className="h-64 flex flex-col items-center justify-center gap-2 text-[var(--danger)] text-center p-4">
+          <AlertCircle className="w-6 h-6" />
+          <span className="text-xs">{fallbackError}</span>
+          <button
+            type="button"
+            onClick={handleFallback}
+            className="text-xs underline text-[var(--accent)] mt-1 font-bold"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return (
+      <canvas
+        ref={canvasRef}
+        className="max-h-[600px] w-auto object-contain rounded shadow-sm border border-neutral-200"
+      />
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`/api/documents/${documentId}/pages/${pageNo}`}
+      alt={`Page ${pageNo} preview`}
+      className="max-h-[600px] w-auto object-contain rounded shadow-sm border border-neutral-200"
+      loading="lazy"
+      onError={handleFallback}
+    />
   );
 }

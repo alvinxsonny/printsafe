@@ -13,7 +13,6 @@ import {
   AlertCircle,
   Loader2,
   Sparkles,
-  ExternalLink,
 } from "lucide-react";
 import { Button3D, Badge, Modal } from "@/components/ui";
 
@@ -147,18 +146,46 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
 
       try {
         const res = await fetch(`/api/viewer/${jobId}/page/${p}`);
-        if (!res.ok) {
+        if (res.ok) {
+          const blob = await res.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          loadedPagesRef.current.add(p);
+          setPageBlobs((prev) => ({ ...prev, [p]: objectUrl }));
+          return;
+        }
+
+        // Resilient Fallback: render directly using client-side PDF.js from secure PDF endpoint
+        const pdfRes = await fetch(`/api/viewer/${jobId}/pdf`);
+        if (!pdfRes.ok) {
           const errData = await res.json().catch(() => ({}));
           throw new Error(
             errData.error || `Failed to load page ${p} (HTTP ${res.status})`
           );
         }
 
-        const blob = await res.blob();
-        const objectUrl = URL.createObjectURL(blob);
+        const pdfArrayBuffer = await pdfRes.arrayBuffer();
+        const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+        const loadingTask = pdfjsLib.getDocument({
+          data: new Uint8Array(pdfArrayBuffer),
+          useSystemFonts: true,
+          disableFontFace: false,
+        });
+        const pdfDoc = await loadingTask.promise;
+        const page = await pdfDoc.getPage(p);
+        const scale = 2.0;
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas context creation failed");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
 
+        const dataUrl = canvas.toDataURL("image/webp", 0.9);
         loadedPagesRef.current.add(p);
-        setPageBlobs((prev) => ({ ...prev, [p]: objectUrl }));
+        setPageBlobs((prev) => ({ ...prev, [p]: dataUrl }));
       } catch (err: unknown) {
         console.warn(`Failed loading page ${p}:`, err);
         const msg =
@@ -384,22 +411,6 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                 </span>
               </Button3D>
 
-              <a
-                href={`/api/viewer/${jobId}/pdf`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button3D
-                  variant="secondary"
-                  size="sm"
-                  className="flex items-center gap-1.5 font-bold"
-                  title="Open or print clean PDF file directly"
-                >
-                  <ExternalLink className="w-4 h-4 text-[var(--accent)]" />
-                  <span>Open Clean PDF</span>
-                </Button3D>
-              </a>
-
               <Button3D
                 variant="secondary"
                 size="sm"
@@ -565,13 +576,13 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                       className="watermark-overlay print:hidden absolute inset-0 pointer-events-none select-none overflow-hidden"
                       style={{
                         backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
-                          `<svg width='380' height='220' xmlns='http://www.w3.org/2000/svg'><text x='20' y='70' transform='rotate(-25 190 110)' font-family='sans-serif' font-size='13' font-weight='800' fill='rgba(255,255,255,0.22)' letter-spacing='1'>PRINTSAFE PRIVATE VIEW • DO NOT PHOTOGRAPH</text><text x='35' y='150' transform='rotate(-25 190 110)' font-family='monospace' font-size='11' font-weight='700' fill='rgba(255,255,255,0.18)' letter-spacing='0.5'>JOB #${jobId.slice(0, 8).toUpperCase()} • CONFIDENTIAL COUNTER VIEW</text></svg>`
+                          `<svg width='400' height='240' xmlns='http://www.w3.org/2000/svg'><text x='20' y='80' transform='rotate(-25 200 120)' font-family='sans-serif' font-size='14' font-weight='900' fill='rgba(220,38,38,0.28)' letter-spacing='1.5'>PRINTSAFE PRIVATE VIEW • DO NOT PHOTOGRAPH</text><text x='35' y='145' transform='rotate(-25 200 120)' font-family='monospace' font-size='12' font-weight='800' fill='rgba(15,23,42,0.26)' letter-spacing='1'>JOB #${jobId.slice(0, 8).toUpperCase()} • CONFIDENTIAL COUNTER VIEW</text></svg>`
                         )}")`,
                         backgroundRepeat: "repeat",
                       }}
                     >
                       <div className="absolute bottom-2 left-0 right-0 flex justify-center">
-                        <span className="px-3 py-1 rounded-full bg-black/60 text-[10px] font-mono font-bold text-white/80 border border-white/20 backdrop-blur-sm">
+                        <span className="px-3 py-1 rounded-full bg-red-950/80 text-[10px] font-mono font-bold text-red-200 border border-red-500/40 backdrop-blur-sm">
                           Private Preview &bull; Watermark overlay is omitted
                           when printing
                         </span>

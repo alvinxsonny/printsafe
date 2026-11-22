@@ -21,8 +21,21 @@ export interface PageRenderer {
  */
 export class PdfJsPageRenderer implements PageRenderer {
   async render(pdfBuffer: Buffer, pageNo: number): Promise<RenderPageResult> {
+    const canvasPkg = await import("@napi-rs/canvas");
+    const { createCanvas, DOMMatrix, ImageData, Path2D } = canvasPkg;
+
+    // Attach polyfills to globalThis for pdfjs-dist in Node.js
+    if (typeof (globalThis as unknown as { DOMMatrix?: unknown }).DOMMatrix === "undefined" && DOMMatrix) {
+      (globalThis as unknown as { DOMMatrix?: unknown }).DOMMatrix = DOMMatrix;
+    }
+    if (typeof (globalThis as unknown as { ImageData?: unknown }).ImageData === "undefined" && ImageData) {
+      (globalThis as unknown as { ImageData?: unknown }).ImageData = ImageData;
+    }
+    if (typeof (globalThis as unknown as { Path2D?: unknown }).Path2D === "undefined" && Path2D) {
+      (globalThis as unknown as { Path2D?: unknown }).Path2D = Path2D;
+    }
+
     const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-    const { createCanvas } = await import("@napi-rs/canvas");
 
     const loadingTask = pdfjsLib.getDocument({
       data: new Uint8Array(pdfBuffer),

@@ -80,6 +80,7 @@ export async function GET(
       },
     });
   } catch (err: unknown) {
+    console.error("[GET /api/documents/[id]/pages/[pageNo]] Error:", err);
     const msg = err instanceof Error ? err.message : "Failed to render page";
     return NextResponse.json({ error: msg }, { status: 500 });
   }

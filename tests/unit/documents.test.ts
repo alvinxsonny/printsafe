@@ -142,4 +142,17 @@ describe("Document Vault Validation and Conversion", () => {
       expect(result.error).toContain("vault storage limit");
     });
   });
+
+  describe("defaultPageRenderer", () => {
+    it("renders page 1 of a PDF to a WebP buffer", async () => {
+      const { defaultPageRenderer } = await import("@/lib/documents/render");
+      const pdf = await PDFDocument.create();
+      pdf.addPage([400, 600]);
+      const bytes = await pdf.save();
+      const res = await defaultPageRenderer.render(Buffer.from(bytes), 1);
+      expect(res.pageBuffer).toBeInstanceOf(Buffer);
+      expect(res.width).toBeGreaterThan(0);
+      expect(res.height).toBeGreaterThan(0);
+    });
+  });
 });

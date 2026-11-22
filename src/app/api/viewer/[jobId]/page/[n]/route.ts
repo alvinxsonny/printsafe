@@ -158,6 +158,7 @@ export async function GET(
       },
     });
   } catch (err: unknown) {
+    console.error(`[GET /api/viewer/[jobId]/page/[n]] Error:`, err);
     const msg = err instanceof Error ? err.message : "Failed to load page";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
