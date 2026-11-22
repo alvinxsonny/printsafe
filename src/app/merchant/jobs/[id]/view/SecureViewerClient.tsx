@@ -315,9 +315,9 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#111827] text-white flex flex-col items-center justify-center p-6 gap-3">
+      <div className="dark min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center p-6 gap-3">
         <Loader2 className="w-10 h-10 animate-spin text-[var(--accent)]" />
-        <p className="text-xs text-gray-400 font-semibold">
+        <p className="text-xs text-[var(--text-muted)] font-semibold">
           Verifying security authorization &amp; decrypting pages...
         </p>
       </div>
@@ -326,12 +326,14 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
 
   if (errorMessage && !session) {
     return (
-      <div className="min-h-screen bg-[#111827] text-white flex flex-col items-center justify-center p-6 text-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 mx-auto">
+      <div className="dark min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="w-12 h-12 rounded-2xl bg-[var(--danger-fill)]/15 border border-[var(--danger)]/30 flex items-center justify-center text-[var(--danger)] mx-auto">
           <ShieldAlert className="w-6 h-6" />
         </div>
-        <h2 className="text-lg font-black tracking-tight">Access Prohibited</h2>
-        <p className="text-xs text-gray-400 max-w-md mx-auto leading-relaxed">
+        <h2 className="text-lg font-black tracking-tight text-[var(--text)]">
+          Access Prohibited
+        </h2>
+        <p className="text-xs text-[var(--text-muted)] max-w-md mx-auto leading-relaxed">
           {errorMessage}
         </p>
         <Link href={`/merchant/jobs/${jobId}`}>
@@ -357,18 +359,18 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
   return (
     <div
       onContextMenu={(e) => e.preventDefault()}
-      className="min-h-screen bg-[#0F172A] text-gray-100 flex flex-col select-none relative"
+      className="dark min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col select-none relative"
     >
       {/* Privacy Shield Overlay when window loses focus */}
       {isWindowBlurred && (
-        <div className="fixed inset-0 z-50 bg-[#0F172A]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center space-y-3 cursor-pointer">
-          <div className="w-14 h-14 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto">
+        <div className="fixed inset-0 z-50 bg-[var(--bg)]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center space-y-3 cursor-pointer">
+          <div className="w-14 h-14 rounded-3xl bg-[var(--accent-fill)]/15 border border-[var(--accent)]/30 flex items-center justify-center text-[var(--accent)] mx-auto">
             <Lock className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-black tracking-tight text-white">
+          <h3 className="text-base font-black tracking-tight text-[var(--text)]">
             Document Hidden For Privacy
           </h3>
-          <p className="text-xs text-gray-400 max-w-sm">
+          <p className="text-xs text-[var(--text-muted)] max-w-sm">
             Content is automatically shielded while this window or tab is not
             active. Click anywhere on this screen to resume viewing.
           </p>
@@ -377,14 +379,14 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
 
       {/* Access Expired Screen */}
       {isExpired && (
-        <div className="fixed inset-0 z-40 bg-[#0F172A] flex flex-col items-center justify-center p-6 text-center space-y-4">
-          <div className="w-14 h-14 rounded-3xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 mx-auto">
+        <div className="fixed inset-0 z-40 bg-[var(--bg)] flex flex-col items-center justify-center p-6 text-center space-y-4">
+          <div className="w-14 h-14 rounded-3xl bg-[var(--warm-fill)]/20 border border-[var(--warm)]/40 flex items-center justify-center text-[var(--warm)] mx-auto">
             <Clock className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-black tracking-tight text-white">
+          <h3 className="text-base font-black tracking-tight text-[var(--text)]">
             Viewing Window Expired
           </h3>
-          <p className="text-xs text-gray-400 max-w-md">
+          <p className="text-xs text-[var(--text-muted)] max-w-md">
             The 30-minute zero-trust viewing window has ended. To inspect or
             print again, the customer must provide a regenerated code.
           </p>
@@ -397,11 +399,11 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
       )}
 
       {/* Top Fixed Control Bar (Screen Only - Hidden in Print) */}
-      <header className="print:hidden sticky top-0 z-30 bg-[#1E293B]/95 backdrop-blur-md border-b border-gray-700/60 px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-lg">
+      <header className="print:hidden sticky top-0 z-30 bg-[var(--surface)]/95 backdrop-blur-md border-b border-[var(--border)] px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md">
         <div className="flex items-center gap-3">
           <Link
             href={`/merchant/jobs/${jobId}`}
-            className="p-1.5 rounded-xl border border-gray-700 bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 transition-all"
+            className="p-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--accent)] transition-all flex items-center justify-center"
             title="Exit viewer"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -409,19 +411,19 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
 
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-black text-white">
+              <h1 className="text-sm font-black text-[var(--text)]">
                 {session?.customerAlias}
               </h1>
               <Badge variant="live" size="sm">
                 READER UNLOCKED
               </Badge>
               {session?.deleteAfterPrint && (
-                <span className="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-[10px] font-bold text-rose-300">
+                <span className="px-2 py-0.5 rounded-full bg-[var(--danger-fill)]/20 border border-[var(--danger)]/40 text-[10px] font-bold text-[var(--danger)]">
                   AUTO-DELETE ON PRINT
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-gray-400 font-mono mt-0.5">
+            <p className="text-[10px] text-[var(--text-muted)] font-mono mt-0.5">
               Job #{jobId.slice(0, 8)} &bull; {session?.requestedPages.length}{" "}
               pages &bull; Reopen #{session?.openCount}
             </p>
@@ -430,13 +432,13 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
 
         {/* Live Countdown & Action Buttons */}
         <div className="flex items-center gap-3 self-end md:self-auto">
-          <div className="px-3 py-1.5 rounded-xl bg-gray-800 border border-gray-700 flex items-center gap-2 text-xs font-mono">
-            <Clock className="w-4 h-4 text-emerald-400" />
+          <div className="px-3 py-1.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] flex items-center gap-2 text-xs font-mono">
+            <Clock className="w-4 h-4 text-[var(--accent)]" />
             <span
               className={`font-black ${
                 secondsLeft <= 120
-                  ? "text-amber-400 animate-pulse"
-                  : "text-emerald-400"
+                  ? "text-[var(--warm)] animate-pulse"
+                  : "text-[var(--accent)]"
               }`}
             >
               {Math.floor(secondsLeft / 60)}:
@@ -451,10 +453,12 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                 size="sm"
                 onClick={handleTriggerPrint}
                 disabled={isPrinting}
-                className="flex items-center gap-1.5 font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md"
+                className="flex items-center gap-1.5 font-bold"
               >
-                <Printer className="w-4 h-4" />
-                <span>{isPrinting ? "Opening..." : "Print Document"}</span>
+                <Printer className="w-4 h-4 text-zinc-950" />
+                <span className="text-zinc-950 font-black">
+                  {isPrinting ? "Opening..." : "Print Document"}
+                </span>
               </Button3D>
 
               <Button3D
@@ -462,9 +466,9 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                 size="sm"
                 onClick={() => setShowMarkPrintedConfirm(true)}
                 disabled={isMarkingPrinted}
-                className="flex items-center gap-1.5 text-xs text-gray-200"
+                className="flex items-center gap-1.5 font-bold"
               >
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <CheckCircle2 className="w-4 h-4 text-[var(--accent)]" />
                 <span>Mark Printed</span>
               </Button3D>
             </>
@@ -476,10 +480,12 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
               size="sm"
               onClick={handleCompleteJob}
               disabled={isCompleting}
-              className="flex items-center gap-1.5 font-bold bg-emerald-600 text-white"
+              className="flex items-center gap-1.5 font-bold"
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{isCompleting ? "Completing..." : "Mark Completed"}</span>
+              <CheckCircle2 className="w-4 h-4 text-zinc-950" />
+              <span className="text-zinc-950 font-black">
+                {isCompleting ? "Completing..." : "Mark Completed"}
+              </span>
             </Button3D>
           )}
         </div>
@@ -488,58 +494,58 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
       {/* Main Content Area */}
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 md:p-6 space-y-6">
         {/* Print Instructions Card (Screen Only) */}
-        <div className="print:hidden p-5 rounded-2xl bg-gradient-to-r from-gray-800 to-gray-800/80 border border-gray-700/80 shadow-md space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-700">
+        <div className="print:hidden p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-md space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--border)]">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-xs font-black uppercase tracking-wider text-emerald-400">
+              <Sparkles className="w-4 h-4 text-[var(--accent)]" />
+              <h2 className="text-xs font-black uppercase tracking-wider text-[var(--accent)]">
                 Printer Hardware Settings Checklist
               </h2>
             </div>
-            <span className="text-[11px] text-gray-400 font-mono">
+            <span className="text-[11px] text-[var(--text-muted)] font-mono">
               Rate Quote: ₹{((session?.quotePaise || 0) / 100).toFixed(2)}
             </span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="p-2.5 rounded-xl bg-gray-900/60 border border-gray-700/50">
-              <span className="text-[10px] text-gray-400 font-bold uppercase block">
+            <div className="p-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border)]">
+              <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase block">
                 Copies
               </span>
-              <span className="text-sm font-black font-mono text-white">
+              <span className="text-sm font-black font-mono text-[var(--text)]">
                 {session?.settings.copies || 1}
               </span>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-gray-900/60 border border-gray-700/50">
-              <span className="text-[10px] text-gray-400 font-bold uppercase block">
+            <div className="p-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border)]">
+              <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase block">
                 Color Mode
               </span>
-              <span className="text-sm font-black text-white">
+              <span className="text-sm font-black text-[var(--text)]">
                 {session?.settings.color ? "Colour" : "Black & White"}
               </span>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-gray-900/60 border border-gray-700/50">
-              <span className="text-[10px] text-gray-400 font-bold uppercase block">
+            <div className="p-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border)]">
+              <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase block">
                 Paper Sides
               </span>
-              <span className="text-sm font-black text-white">
+              <span className="text-sm font-black text-[var(--text)]">
                 {session?.settings.duplex ? "2-Sided (Duplex)" : "1-Sided"}
               </span>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-gray-900/60 border border-gray-700/50">
-              <span className="text-[10px] text-gray-400 font-bold uppercase block">
+            <div className="p-2.5 rounded-xl bg-[var(--surface-2)] border border-[var(--border)]">
+              <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase block">
                 Paper Size
               </span>
-              <span className="text-sm font-black text-white">
+              <span className="text-sm font-black text-[var(--text)]">
                 {session?.settings.paper_size || "A4"}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
+          <div className="flex items-center gap-2 text-[11px] text-[var(--warm)] bg-[var(--warm-fill)]/15 border border-[var(--warm)]/30 p-2.5 rounded-xl">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <p>
               Browsers cannot preset your printer hardware dialog. Please ensure
@@ -550,8 +556,8 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
         </div>
 
         {/* Security Confidentiality Notice (Screen Only) */}
-        <div className="print:hidden flex items-center justify-center gap-2 text-center text-xs text-gray-400 py-1">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <div className="print:hidden flex items-center justify-center gap-2 text-center text-xs text-[var(--text-muted)] py-1">
+          <ShieldCheck className="w-4 h-4 text-[var(--accent)]" />
           <span>
             This document is private. Page viewing is logged in real-time. Do
             not photograph or copy.
@@ -568,24 +574,29 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
             return (
               <div
                 key={pageNo}
-                className="bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-700/60 mx-auto max-w-2xl relative"
+                className="bg-[var(--surface)] rounded-2xl shadow-xl overflow-hidden border border-[var(--border)] mx-auto max-w-2xl relative"
               >
-                <div className="bg-gray-100 border-b border-gray-200 px-4 py-1.5 flex items-center justify-between text-[11px] text-gray-600 font-mono">
-                  <span>Page {pageNo}</span>
-                  <span className="text-[10px] uppercase font-bold text-gray-400">
+                <div className="bg-[var(--surface-2)] border-b border-[var(--border)] px-4 py-2 flex items-center justify-between text-xs text-[var(--text-muted)] font-mono">
+                  <span className="font-bold text-[var(--text)]">
+                    Page {pageNo}
+                  </span>
+                  <span className="text-[10px] uppercase font-bold text-[var(--accent)] flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" />
                     Watermarked Zero-Trust View
                   </span>
                 </div>
 
                 {isPageLoading && (
-                  <div className="h-96 flex flex-col items-center justify-center gap-2 text-gray-400">
-                    <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
-                    <span className="text-xs">Decrypting page {pageNo}...</span>
+                  <div className="h-96 flex flex-col items-center justify-center gap-2 text-[var(--text-muted)]">
+                    <Loader2 className="w-7 h-7 animate-spin text-[var(--accent)]" />
+                    <span className="text-xs font-semibold text-[var(--text)]">
+                      Decrypting &amp; watermarking page {pageNo}...
+                    </span>
                   </div>
                 )}
 
                 {pageError && !hasBlob && (
-                  <div className="h-96 flex flex-col items-center justify-center gap-3 text-red-500 p-6 text-center">
+                  <div className="h-96 flex flex-col items-center justify-center gap-3 text-[var(--danger)] p-6 text-center">
                     <AlertCircle className="w-8 h-8" />
                     <p className="text-xs font-semibold">{pageError}</p>
                     <Button3D
@@ -599,7 +610,7 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                 )}
 
                 <div
-                  className={`flex justify-center p-2 bg-gray-50 overflow-hidden ${hasBlob ? "block" : "hidden"}`}
+                  className={`flex justify-center p-3 bg-black/40 overflow-hidden ${hasBlob ? "block" : "hidden"}`}
                 >
                   <canvas
                     ref={(el) => {
@@ -608,7 +619,7 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                         drawPageToCanvas(pageNo, el, pageBlobs[pageNo]);
                       }
                     }}
-                    className="max-w-full h-auto shadow-inner rounded-sm"
+                    className="max-w-full h-auto shadow-2xl rounded-sm"
                   />
                 </div>
               </div>
@@ -701,7 +712,9 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
               onClick={handleMarkPrintedConfirm}
               disabled={isMarkingPrinted}
             >
-              {isMarkingPrinted ? "Processing..." : "Confirm & Mark Printed"}
+              <span className="text-zinc-950 font-black">
+                {isMarkingPrinted ? "Processing..." : "Confirm & Mark Printed"}
+              </span>
             </Button3D>
           </div>
         </div>
