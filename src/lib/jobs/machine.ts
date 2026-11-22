@@ -205,6 +205,10 @@ export async function transitionJob(params: {
       newStatus = "paid";
       updates.status = "paid";
       updates.paidAt = now;
+      updates.codeExpiresAt = new Date(
+        now.getTime() + PASSCODE_TTL_MINUTES * 60 * 1000
+      );
+      updates.codeAttempts = 0;
       break;
     }
 
@@ -277,10 +281,10 @@ export async function transitionJob(params: {
     }
 
     case "regenerate_code": {
-      if (job.status !== "accepted") {
+      if (job.status !== "accepted" && job.status !== "paid") {
         return {
           success: false,
-          error: "Can only regenerate passcode for accepted jobs.",
+          error: "Can only regenerate passcode for accepted or paid jobs.",
         };
       }
       passcode = generatePasscode();

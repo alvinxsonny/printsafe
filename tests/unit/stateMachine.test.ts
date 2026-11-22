@@ -579,7 +579,32 @@ describe("Print Job State Machine (Phase 16 QA)", () => {
       expect(mockJobsTable[jobId].codeEnc).toBeDefined();
     });
 
-    it("blocks regenerate_code if job is not accepted", async () => {
+    it("regenerates passcode for paid jobs in far mode", async () => {
+      const jobId = "job_regen_paid";
+      mockJobsTable[jobId] = {
+        id: jobId,
+        status: "paid",
+        mode: "far",
+        customerId: "cust_1",
+        shopId: "shop_1",
+        codeAttempts: 1,
+        requestedAt: new Date(),
+      };
+
+      const result = await transitionJob({
+        jobId,
+        action: "regenerate_code",
+        actor: { id: "cust_1", role: "customer" },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.passcode).toMatch(/^\d{4}$/);
+      expect(mockJobsTable[jobId].codeAttempts).toBe(0);
+      expect(mockJobsTable[jobId].codeEnc).toBeDefined();
+      expect(mockJobsTable[jobId].status).toBe("paid");
+    });
+
+    it("blocks regenerate_code if job is neither accepted nor paid", async () => {
       const jobId = "job_regen_fail";
       mockJobsTable[jobId] = {
         id: jobId,
@@ -598,7 +623,7 @@ describe("Print Job State Machine (Phase 16 QA)", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain(
-        "Can only regenerate passcode for accepted jobs"
+        "Can only regenerate passcode for accepted or paid jobs"
       );
     });
   });

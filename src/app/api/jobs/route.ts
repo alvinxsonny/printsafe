@@ -86,7 +86,9 @@ export async function GET() {
       let passcode: string | null = null;
       if (
         job.codeEnc &&
-        (currentStatus === "accepted" || currentStatus === "unlocked")
+        (currentStatus === "accepted" ||
+          currentStatus === "paid" ||
+          currentStatus === "unlocked")
       ) {
         try {
           passcode = decryptPasscode(job.codeEnc);

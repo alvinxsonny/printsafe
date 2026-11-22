@@ -93,7 +93,9 @@ export async function GET(
     if (isCustomerOwner) {
       if (
         jobRow.codeEnc &&
-        (currentStatus === "accepted" || currentStatus === "unlocked")
+        (currentStatus === "accepted" ||
+          currentStatus === "paid" ||
+          currentStatus === "unlocked")
       ) {
         try {
           passcode = decryptPasscode(jobRow.codeEnc);

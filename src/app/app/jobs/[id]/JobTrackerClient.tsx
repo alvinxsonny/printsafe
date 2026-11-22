@@ -486,24 +486,29 @@ export function JobTrackerClient({ jobId }: { jobId: string }) {
         )}
 
         {/* Handover Code Prominent Display (When Accepted / Paid / Unlocked) */}
-        {job.passcode &&
-          (job.status === "accepted" ||
-            job.status === "paid" ||
-            job.status === "unlocked") && (
-            <Card3D className="p-6 bg-[var(--surface)] border-2 border-[var(--accent)] text-center space-y-4">
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">
-                  {job.status === "unlocked"
-                    ? "Verified Handover Passcode"
-                    : "Your Handover Passcode"}
-                </span>
-                <p className="text-xs text-[var(--text-muted)] max-w-md mx-auto">
-                  Show or tell this 4-digit code to the shopkeeper at the
-                  counter to unlock and print your document.
-                </p>
-              </div>
+        {(job.status === "accepted" ||
+          job.status === "paid" ||
+          job.status === "unlocked") && (
+          <Card3D className="p-6 bg-[var(--surface)] border-2 border-[var(--accent)] text-center space-y-4">
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">
+                {job.status === "unlocked"
+                  ? "Verified Handover Passcode"
+                  : "Your Handover Passcode"}
+              </span>
+              <p className="text-xs text-[var(--text-muted)] max-w-md mx-auto">
+                {job.status === "unlocked"
+                  ? "This code was verified. Your document is being printed."
+                  : isCodeLocked
+                    ? "Passcode locked after 3 wrong attempts. Tap Regenerate Code to issue a fresh passcode."
+                    : isCodeExpired
+                      ? "Your passcode has expired. Tap Regenerate Code to issue a fresh passcode."
+                      : "Show or tell this 4-digit code to the shopkeeper at the counter to unlock and print your document."}
+              </p>
+            </div>
 
-              {/* 4-Digit Big Digits Box */}
+            {/* 4-Digit Big Digits Box */}
+            {job.passcode ? (
               <div className="flex items-center justify-center gap-3 py-2">
                 {job.passcode.split("").map((digit, idx) => (
                   <span
@@ -514,9 +519,23 @@ export function JobTrackerClient({ jobId }: { jobId: string }) {
                   </span>
                 ))}
               </div>
+            ) : (
+              <div className="py-2">
+                <Button3D
+                  variant="primary"
+                  size="sm"
+                  onClick={handleRegenerateCode}
+                  disabled={isRegenerating}
+                  className="text-xs font-bold"
+                >
+                  {isRegenerating ? "Generating..." : "Generate Passcode"}
+                </Button3D>
+              </div>
+            )}
 
-              {/* Code Actions & Countdown */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-center gap-3 pt-2">
+            {/* Code Actions & Countdown */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-center gap-3 pt-2">
+              {job.passcode && (
                 <Button3D
                   variant="secondary"
                   size="sm"
@@ -530,51 +549,52 @@ export function JobTrackerClient({ jobId }: { jobId: string }) {
                   )}
                   {isCopied ? "Passcode Copied!" : "Copy Passcode"}
                 </Button3D>
+              )}
 
-                {/* Code Expiry or Locked warning */}
-                {isCodeLocked ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-[var(--danger)] font-bold">
-                      Code locked (3 wrong attempts)
-                    </span>
-                    <Button3D
-                      variant="primary"
-                      size="sm"
-                      onClick={handleRegenerateCode}
-                      disabled={isRegenerating}
-                      className="text-xs font-bold"
-                    >
-                      Regenerate Code
-                    </Button3D>
-                  </div>
-                ) : isCodeExpired ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-[var(--warm)] font-bold">
-                      Passcode expired
-                    </span>
-                    <Button3D
-                      variant="primary"
-                      size="sm"
-                      onClick={handleRegenerateCode}
-                      disabled={isRegenerating}
-                      className="text-xs font-bold"
-                    >
-                      Regenerate Code
-                    </Button3D>
-                  </div>
-                ) : (
-                  <span className="text-xs font-mono text-[var(--text-muted)] flex items-center justify-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    Expires in{" "}
-                    <strong>
-                      {Math.floor(codeSecondsLeft / 60)}:
-                      {String(codeSecondsLeft % 60).padStart(2, "0")}
-                    </strong>
+              {/* Code Expiry or Locked warning */}
+              {isCodeLocked ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[var(--danger)] font-bold">
+                    Code locked (3 wrong attempts)
                   </span>
-                )}
-              </div>
-            </Card3D>
-          )}
+                  <Button3D
+                    variant="primary"
+                    size="sm"
+                    onClick={handleRegenerateCode}
+                    disabled={isRegenerating}
+                    className="text-xs font-bold"
+                  >
+                    Regenerate Code
+                  </Button3D>
+                </div>
+              ) : isCodeExpired ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[var(--warm)] font-bold">
+                    Passcode expired
+                  </span>
+                  <Button3D
+                    variant="primary"
+                    size="sm"
+                    onClick={handleRegenerateCode}
+                    disabled={isRegenerating}
+                    className="text-xs font-bold"
+                  >
+                    Regenerate Code
+                  </Button3D>
+                </div>
+              ) : job.passcode ? (
+                <span className="text-xs font-mono text-[var(--text-muted)] flex items-center justify-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  Expires in{" "}
+                  <strong>
+                    {Math.floor(codeSecondsLeft / 60)}:
+                    {String(codeSecondsLeft % 60).padStart(2, "0")}
+                  </strong>
+                </span>
+              ) : null}
+            </div>
+          </Card3D>
+        )}
 
         {/* Waiting on Acceptance Banner */}
         {job.status === "requested" && (
