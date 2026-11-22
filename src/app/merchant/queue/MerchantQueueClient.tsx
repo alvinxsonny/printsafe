@@ -456,11 +456,13 @@ export function MerchantQueueClient() {
                     <p className="text-[11px] text-[var(--text-muted)]">
                       {j.status === "requested"
                         ? "Review specs and accept to issue customer passcode."
-                        : j.status === "accepted" && j.mode === "near"
-                          ? "Customer is walking in. Ask for 4-digit code to unlock viewer."
-                          : j.status === "unlocked"
-                            ? "Viewer unlocked! Click below to launch the private print preview."
-                            : "Job handled."}
+                        : j.status === "paid"
+                          ? "Payment confirmed! Ask customer for 4-digit code to unlock document reader."
+                          : j.status === "accepted" && j.mode === "near"
+                            ? "Customer is walking in. Ask for 4-digit code to unlock viewer."
+                            : j.status === "unlocked"
+                              ? "Viewer unlocked! Click below to launch the private print preview."
+                              : "Job handled."}
                     </p>
 
                     <div className="flex items-center gap-2 shrink-0">
@@ -487,7 +489,7 @@ export function MerchantQueueClient() {
                         </>
                       )}
 
-                      {j.status === "accepted" && (
+                      {(j.status === "accepted" || j.status === "paid") && (
                         <Link href={`/merchant/jobs/${j.id}`}>
                           <Button3D
                             variant="primary"
@@ -495,7 +497,11 @@ export function MerchantQueueClient() {
                             className="flex items-center gap-1.5"
                           >
                             <Key className="w-4 h-4" />
-                            <span>Enter Customer Code</span>
+                            <span>
+                              {j.status === "paid"
+                                ? "Enter Code & Unlock"
+                                : "Enter Customer Code"}
+                            </span>
                           </Button3D>
                         </Link>
                       )}

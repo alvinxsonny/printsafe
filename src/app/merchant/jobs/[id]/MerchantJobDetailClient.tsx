@@ -437,21 +437,28 @@ export function MerchantJobDetailClient({ jobId }: { jobId: string }) {
               </div>
             )}
 
-            {/* 2. Accepted State (Near Mode): Enter 4-digit code */}
-            {job.status === "accepted" && (
+            {/* 2. Accepted / Paid State: Enter 4-digit code */}
+            {(job.status === "accepted" || job.status === "paid") && (
               <div className="p-6 rounded-2xl border-2 border-[var(--accent)] bg-[var(--surface-2)] space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-[var(--accent-fill)]/20 border border-[var(--accent)] flex items-center justify-center text-[var(--accent)] shrink-0">
                     <Key className="w-5 h-5" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-sm font-black text-[var(--text)]">
-                      Customer Handover Verification
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-black text-[var(--text)]">
+                        Customer Handover Verification
+                      </h3>
+                      {job.status === "paid" && (
+                        <Badge variant="live" size="sm">
+                          ✓ Paid Online
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                      The customer is walking in. Ask them for the 4-digit code
-                      displayed on their phone tracker screen to unlock the
-                      document reader.
+                      {job.status === "paid"
+                        ? "Payment is confirmed. Enter the 4-digit code provided by the customer to unlock the document reader and print."
+                        : "The customer is walking in. Ask them for the 4-digit code displayed on their phone tracker screen to unlock the document reader."}
                     </p>
                   </div>
                 </div>

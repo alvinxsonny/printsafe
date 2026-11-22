@@ -471,9 +471,25 @@ export function JobTrackerClient({ jobId }: { jobId: string }) {
           </Card3D>
         )}
 
-        {/* Handover Code Prominent Display (When Accepted / Unlocked) */}
+        {/* Paid Status & Handover Guidance Banner */}
+        {job.status === "paid" && (
+          <Card3D className="p-4 bg-[var(--accent-fill)]/15 border-2 border-[var(--accent)] space-y-1 text-center">
+            <h3 className="text-sm font-black text-[var(--text)]">
+              Payment Confirmed &bull; Order Ready for Print
+            </h3>
+            <p className="text-xs text-[var(--text-muted)] max-w-lg mx-auto">
+              Under PrintSafe&apos;s zero-trust privacy guarantee, your file
+              remains encrypted until you give the 4-digit code below to the
+              shopkeeper at the counter.
+            </p>
+          </Card3D>
+        )}
+
+        {/* Handover Code Prominent Display (When Accepted / Paid / Unlocked) */}
         {job.passcode &&
-          (job.status === "accepted" || job.status === "unlocked") && (
+          (job.status === "accepted" ||
+            job.status === "paid" ||
+            job.status === "unlocked") && (
             <Card3D className="p-6 bg-[var(--surface)] border-2 border-[var(--accent)] text-center space-y-4">
               <div className="space-y-1">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">
