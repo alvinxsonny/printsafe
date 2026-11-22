@@ -30,16 +30,11 @@ export default function HowItWorksPage() {
               <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
             </Button3D>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/privacy">
-              <Button3D variant="outline" size="sm">
-                Privacy Policy
-              </Button3D>
-            </Link>
-            <Badge variant="live" size="sm">
-              Zero-Trust Flow
-            </Badge>
-          </div>
+          <Link href="/privacy">
+            <Button3D variant="outline" size="sm">
+              Privacy Policy
+            </Button3D>
+          </Link>
         </div>
 
         {/* Hero Header */}
