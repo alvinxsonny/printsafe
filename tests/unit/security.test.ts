@@ -143,4 +143,43 @@ describe("Phase 15: Privacy, Compliance & Security Hardening", () => {
       expect(anonymizedJob.shopId).toBe("shop_888");
     });
   });
+
+  describe("Error Monitoring & PII Scrubbing (Phase 17 Task 6)", () => {
+    it("redacts email addresses, phone numbers, and Aadhaar numbers from strings and objects", async () => {
+      const { scrubPII } = await import("@/lib/security/monitoring");
+
+      const rawString =
+        "Customer john.doe@example.com with phone +919876543210 and Aadhaar 2345 6789 0123 reported failure";
+      const scrubbed = scrubPII(rawString);
+
+      expect(scrubbed).not.toContain("john.doe@example.com");
+      expect(scrubbed).toContain("[REDACTED_EMAIL]");
+      expect(scrubbed).not.toContain("9876543210");
+      expect(scrubbed).toContain("[REDACTED_PHONE]");
+      expect(scrubbed).not.toContain("2345 6789 0123");
+      expect(scrubbed).toContain("[REDACTED_AADHAAR]");
+    });
+
+    it("redacts sensitive fields in nested error contexts", async () => {
+      const { scrubPII } = await import("@/lib/security/monitoring");
+
+      const context = {
+        user: "cust_123",
+        filename: "salary_slip_2026.pdf",
+        storageKey: "documents/cust_123/encrypted.bin",
+        secretToken: "sk_live_xyz",
+        passcode: "4821",
+        meta: {
+          note: "Contact me at alice@test.com",
+        },
+      };
+
+      const result = scrubPII(context);
+      expect(result.filename).toBe("[REDACTED_PII]");
+      expect(result.storageKey).toBe("[REDACTED_PII]");
+      expect(result.secretToken).toBe("[REDACTED_PII]");
+      expect(result.passcode).toBe("[REDACTED_PII]");
+      expect(result.meta.note).toContain("[REDACTED_EMAIL]");
+    });
+  });
 });
