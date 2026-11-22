@@ -3,7 +3,7 @@ import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { documents, documentPages } from "@/lib/db/schema";
 import { getObject, putObject } from "@/lib/storage/client";
-import { unwrapDataKey, decryptBlob, encryptBlob } from "@/lib/storage/crypto";
+import { unwrapDataKey, decryptBlob } from "@/lib/storage/crypto";
 
 export interface RenderPageResult {
   pageBuffer: Buffer;
@@ -76,8 +76,8 @@ export class PdfJsPageRenderer implements PageRenderer {
 export const defaultPageRenderer: PageRenderer = new PdfJsPageRenderer();
 
 /**
- * Renders a document page, with caching in document_pages and S3 vault storage.
- * All cached rendered page blobs are encrypted with the document's unique data key.
+ * Renders a document page, with caching in document_pages and storage.
+ * Stores raw rendered WebP pages, with backward-compatibility for legacy encrypted blobs.
  */
 export async function renderPage(
   documentId: string,
@@ -96,7 +96,14 @@ export async function renderPage(
   }
 
   const doc = docRows[0];
-  const dataKey = unwrapDataKey(doc.wrappedKey);
+  let dataKey: Buffer | null = null;
+  if (doc.wrappedKey) {
+    try {
+      dataKey = unwrapDataKey(doc.wrappedKey);
+    } catch {
+      dataKey = null;
+    }
+  }
 
   // 2. Check if page is already cached in document_pages
   const cachedRows = await db
@@ -113,8 +120,20 @@ export async function renderPage(
   if (cachedRows.length > 0) {
     const cached = cachedRows[0];
     try {
-      const encryptedBlob = await getObject(cached.storageKey);
-      const webpBuffer = decryptBlob(encryptedBlob, dataKey);
+      const pageBlob = await getObject(cached.storageKey);
+      let webpBuffer = pageBlob;
+      // If legacy encrypted (doesn't start with RIFF) and dataKey is available, decrypt
+      if (
+        dataKey &&
+        pageBlob.length >= 28 &&
+        pageBlob.subarray(0, 4).toString() !== "RIFF"
+      ) {
+        try {
+          webpBuffer = decryptBlob(pageBlob, dataKey);
+        } catch {
+          webpBuffer = pageBlob;
+        }
+      }
       return {
         pageBuffer: webpBuffer,
         width: cached.width,
@@ -128,22 +147,28 @@ export async function renderPage(
     }
   }
 
-  // 3. Page not cached: fetch original encrypted document from vault
-  const encryptedPdf = await getObject(doc.storageKey);
-  const plainPdfBuffer = decryptBlob(encryptedPdf, dataKey);
+  // 3. Page not cached: fetch original document from storage
+  const rawPdf = await getObject(doc.storageKey);
+  let plainPdfBuffer = rawPdf;
+  // If stored with legacy encryption (doesn't start with %PDF) and dataKey is available, decrypt
+  if (
+    dataKey &&
+    rawPdf.length >= 28 &&
+    rawPdf.subarray(0, 4).toString() !== "%PDF"
+  ) {
+    try {
+      plainPdfBuffer = decryptBlob(rawPdf, dataKey);
+    } catch {
+      plainPdfBuffer = rawPdf;
+    }
+  }
 
   // 4. Render using the configured renderer
   const renderResult = await renderer.render(plainPdfBuffer, pageNo);
 
-  // 5. Encrypt rendered WebP page with document data key and cache in storage
-  const encryptedPageBlob = encryptBlob(renderResult.pageBuffer, dataKey);
-  const pageStorageKey = `pages/${documentId}/${pageNo}.webp.enc`;
-
-  await putObject(
-    pageStorageKey,
-    encryptedPageBlob,
-    "application/octet-stream"
-  );
+  // 5. Cache raw WebP page in storage
+  const pageStorageKey = `pages/${documentId}/${pageNo}.webp`;
+  await putObject(pageStorageKey, renderResult.pageBuffer, "image/webp");
 
   // 6. Record cache row in document_pages
   await db

@@ -604,7 +604,7 @@ describe("Print Job State Machine (Phase 16 QA)", () => {
       expect(mockJobsTable[jobId].status).toBe("paid");
     });
 
-    it("blocks regenerate_code if job is neither accepted nor paid", async () => {
+    it("blocks regenerate_code if job is actively unlocked without expiring", async () => {
       const jobId = "job_regen_fail";
       mockJobsTable[jobId] = {
         id: jobId,
@@ -612,6 +612,7 @@ describe("Print Job State Machine (Phase 16 QA)", () => {
         mode: "near",
         customerId: "cust_1",
         shopId: "shop_1",
+        unlockedUntil: new Date(Date.now() + 600000), // actively unlocked in future
         requestedAt: new Date(),
       };
 
@@ -625,6 +626,30 @@ describe("Print Job State Machine (Phase 16 QA)", () => {
       expect(result.error).toContain(
         "Can only regenerate passcode for accepted or paid jobs"
       );
+    });
+
+    it("allows regenerate_code when viewing window has expired for unlocked job", async () => {
+      const jobId = "job_regen_unlocked_expired";
+      mockJobsTable[jobId] = {
+        id: jobId,
+        status: "unlocked",
+        mode: "near",
+        customerId: "cust_1",
+        shopId: "shop_1",
+        unlockedUntil: new Date(Date.now() - 10000), // expired 10s ago
+        requestedAt: new Date(),
+      };
+
+      const result = await transitionJob({
+        jobId,
+        action: "regenerate_code",
+        actor: { id: "cust_1", role: "customer" },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.passcode).toMatch(/^\d{4}$/);
+      expect(mockJobsTable[jobId].status).toBe("accepted");
+      expect(mockJobsTable[jobId].unlockedUntil).toBeNull();
     });
   });
 

@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Loader2,
   Sparkles,
+  ExternalLink,
 } from "lucide-react";
 import { Button3D, Badge, Modal } from "@/components/ui";
 
@@ -305,13 +306,16 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
           <h3 className="text-base font-black tracking-tight text-[var(--text)]">
             Viewing Window Expired
           </h3>
-          <p className="text-xs text-[var(--text-muted)] max-w-md">
-            The 30-minute zero-trust viewing window has ended. To inspect or
-            print again, the customer must provide a regenerated code.
+          <p className="text-xs text-[var(--text-muted)] max-w-md leading-relaxed">
+            The viewing window has ended. To inspect or print again, the
+            customer must tap &quot;Regenerate Code&quot; on their phone to
+            issue a fresh passcode.
           </p>
           <Link href={`/merchant/jobs/${jobId}`}>
-            <Button3D variant="secondary" size="sm">
-              Return to Job Dashboard
+            <Button3D variant="primary" size="sm">
+              <span className="text-zinc-950 font-black">
+                Enter Regenerated Code on Job Details
+              </span>
             </Button3D>
           </Link>
         </div>
@@ -379,6 +383,22 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                   {isPrinting ? "Opening..." : "Print Document"}
                 </span>
               </Button3D>
+
+              <a
+                href={`/api/viewer/${jobId}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button3D
+                  variant="secondary"
+                  size="sm"
+                  className="flex items-center gap-1.5 font-bold"
+                  title="Open or print clean PDF file directly"
+                >
+                  <ExternalLink className="w-4 h-4 text-[var(--accent)]" />
+                  <span>Open Clean PDF</span>
+                </Button3D>
+              </a>
 
               <Button3D
                 variant="secondary"
@@ -529,15 +549,34 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                 )}
 
                 {hasBlob && (
-                  <div className="flex justify-center p-4 bg-black/25 overflow-hidden">
+                  <div className="relative flex justify-center p-4 bg-black/25 overflow-hidden">
+                    {/* Clean rendered page */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={pageBlobs[pageNo]}
-                      alt={`Page ${pageNo} - Decrypted Document`}
+                      alt={`Page ${pageNo} - Document Preview`}
                       className="max-w-full h-auto shadow-2xl rounded-sm border border-[var(--border)] pointer-events-none select-none"
                       draggable={false}
                       onContextMenu={(e) => e.preventDefault()}
                     />
+
+                    {/* On-screen Watermark Overlay (Omitted when printing) */}
+                    <div
+                      className="watermark-overlay print:hidden absolute inset-0 pointer-events-none select-none overflow-hidden"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
+                          `<svg width='380' height='220' xmlns='http://www.w3.org/2000/svg'><text x='20' y='70' transform='rotate(-25 190 110)' font-family='sans-serif' font-size='13' font-weight='800' fill='rgba(255,255,255,0.22)' letter-spacing='1'>PRINTSAFE PRIVATE VIEW • DO NOT PHOTOGRAPH</text><text x='35' y='150' transform='rotate(-25 190 110)' font-family='monospace' font-size='11' font-weight='700' fill='rgba(255,255,255,0.18)' letter-spacing='0.5'>JOB #${jobId.slice(0, 8).toUpperCase()} • CONFIDENTIAL COUNTER VIEW</text></svg>`
+                        )}")`,
+                        backgroundRepeat: "repeat",
+                      }}
+                    >
+                      <div className="absolute bottom-2 left-0 right-0 flex justify-center">
+                        <span className="px-3 py-1 rounded-full bg-black/60 text-[10px] font-mono font-bold text-white/80 border border-white/20 backdrop-blur-sm">
+                          Private Preview &bull; Watermark overlay is omitted
+                          when printing
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -660,6 +699,7 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
           nav,
           aside,
           button,
+          .watermark-overlay,
           .print\\:hidden,
           [role="dialog"] {
             display: none !important;

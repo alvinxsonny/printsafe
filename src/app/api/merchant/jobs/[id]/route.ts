@@ -61,18 +61,37 @@ export async function GET(
     }
 
     let status = jobRow.status;
+    let isCodeExpired =
+      jobRow.codeExpiresAt !== null &&
+      new Date().getTime() > new Date(jobRow.codeExpiresAt).getTime();
+    let codeExpiresAt = jobRow.codeExpiresAt;
+
     if (status === "requested" && isJobExpired(jobRow)) {
       status = "expired";
       await db
         .update(printJobs)
         .set({ status: "expired" })
         .where(eq(printJobs.id, jobId));
+    } else if (
+      status === "unlocked" &&
+      jobRow.unlockedUntil &&
+      new Date() > new Date(jobRow.unlockedUntil)
+    ) {
+      status = jobRow.mode === "far" ? "paid" : "accepted";
+      isCodeExpired = true;
+      codeExpiresAt = new Date(Date.now() - 1000);
+      await db
+        .update(printJobs)
+        .set({
+          status,
+          unlockedUntil: null,
+          codeExpiresAt,
+          codeAttempts: 0,
+        })
+        .where(eq(printJobs.id, jobId));
     }
 
     const isLocked = jobRow.codeAttempts >= 3;
-    const isCodeExpired =
-      jobRow.codeExpiresAt !== null &&
-      new Date().getTime() > new Date(jobRow.codeExpiresAt).getTime();
 
     return NextResponse.json({
       job: {
@@ -85,7 +104,7 @@ export async function GET(
         codeAttempts: jobRow.codeAttempts,
         isLocked,
         isCodeExpired,
-        codeExpiresAt: jobRow.codeExpiresAt,
+        codeExpiresAt,
         unlockedUntil: jobRow.unlockedUntil,
         requestedAt: jobRow.requestedAt,
         acceptedAt: jobRow.acceptedAt,

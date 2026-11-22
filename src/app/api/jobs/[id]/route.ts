@@ -79,11 +79,29 @@ export async function GET(
     }
 
     let currentStatus = jobRow.status;
+    let codeExpiresAt = jobRow.codeExpiresAt;
+
     if (currentStatus === "requested" && isJobExpired(jobRow)) {
       currentStatus = "expired";
       await db
         .update(printJobs)
         .set({ status: "expired" })
+        .where(eq(printJobs.id, jobId));
+    } else if (
+      currentStatus === "unlocked" &&
+      jobRow.unlockedUntil &&
+      new Date() > new Date(jobRow.unlockedUntil)
+    ) {
+      currentStatus = jobRow.mode === "far" ? "paid" : "accepted";
+      codeExpiresAt = new Date(Date.now() - 1000);
+      await db
+        .update(printJobs)
+        .set({
+          status: currentStatus,
+          unlockedUntil: null,
+          codeExpiresAt,
+          codeAttempts: 0,
+        })
         .where(eq(printJobs.id, jobId));
     }
 
@@ -129,7 +147,7 @@ export async function GET(
           sheets: jobRow.sheets,
           quotePaise: jobRow.quotePaise,
           passcode,
-          codeExpiresAt: jobRow.codeExpiresAt,
+          codeExpiresAt,
           codeAttempts: jobRow.codeAttempts,
           unlockedUntil: jobRow.unlockedUntil,
           requestedAt: jobRow.requestedAt,

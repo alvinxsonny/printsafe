@@ -80,8 +80,23 @@ export async function GET(
       !jobRow.unlockedUntil || new Date() > new Date(jobRow.unlockedUntil);
 
     if (isExpired) {
+      const revertedStatus = jobRow.mode === "far" ? "paid" : "accepted";
+      await db
+        .update(printJobs)
+        .set({
+          status: revertedStatus,
+          unlockedUntil: null,
+          codeExpiresAt: new Date(Date.now() - 1000),
+          codeAttempts: 0,
+        })
+        .where(eq(printJobs.id, jobRow.id));
+
       return NextResponse.json(
-        { error: "Viewing window has expired.", isExpired: true },
+        {
+          error:
+            "Viewing window has expired. The customer must provide a regenerated code.",
+          isExpired: true,
+        },
         { status: 403 }
       );
     }

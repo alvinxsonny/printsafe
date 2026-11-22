@@ -5,7 +5,6 @@ import { getServerSession } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { documents } from "@/lib/db/schema";
 import { getObject, putObject, deleteObject } from "@/lib/storage/client";
-import { unwrapDataKey, encryptBlob } from "@/lib/storage/crypto";
 import {
   warmDocumentPages,
   detectMagicMime,
@@ -158,12 +157,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. Envelope Encryption and Vault Storage
-    const dataKey = unwrapDataKey(doc.wrappedKey);
-    const encryptedVaultBlob = encryptBlob(finalPdfBuffer, dataKey);
-    const vaultKey = `vault/${documentId}`;
-
-    await putObject(vaultKey, encryptedVaultBlob, "application/octet-stream");
+    // 5. Store Plain Raw Document in Storage
+    const vaultKey = `vault/${documentId}.pdf`;
+    await putObject(vaultKey, finalPdfBuffer, "application/pdf");
 
     // Delete temporary incoming/ object
     await deleteObject(doc.storageKey);

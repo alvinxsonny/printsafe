@@ -281,7 +281,16 @@ export async function transitionJob(params: {
     }
 
     case "regenerate_code": {
-      if (job.status !== "accepted" && job.status !== "paid") {
+      const isUnlockedExpired =
+        job.status === "unlocked" &&
+        job.unlockedUntil &&
+        now > new Date(job.unlockedUntil);
+
+      if (
+        job.status !== "accepted" &&
+        job.status !== "paid" &&
+        !isUnlockedExpired
+      ) {
         return {
           success: false,
           error: "Can only regenerate passcode for accepted or paid jobs.",
@@ -293,6 +302,11 @@ export async function transitionJob(params: {
         now.getTime() + PASSCODE_TTL_MINUTES * 60 * 1000
       );
       updates.codeAttempts = 0;
+      updates.unlockedUntil = null;
+      if (job.status === "unlocked") {
+        newStatus = job.mode === "far" ? "paid" : "accepted";
+        updates.status = newStatus;
+      }
       break;
     }
 

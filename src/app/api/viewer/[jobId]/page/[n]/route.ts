@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 import { eq, and } from "drizzle-orm";
 import { getServerSession } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { shops, printJobs, documents, viewLogs } from "@/lib/db/schema";
 import { parsePageRange } from "@/lib/jobs/quote";
 import { renderPage } from "@/lib/documents/render";
-import { compositeWatermark } from "@/lib/documents/watermark";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import crypto from "node:crypto";
 
@@ -128,19 +128,16 @@ export async function GET(
     // 7. Render/Fetch page
     const renderResult = await renderPage(doc.id, pageNo);
 
-    // 8. Composite Watermark with sharp
-    const watermarkedBuffer = await compositeWatermark(
-      renderResult.pageBuffer,
-      renderResult.width,
-      renderResult.height,
-      {
-        jobId: job.id,
-        shopId: shop?.id || "ADMIN",
-        color: job.settings.color,
-      }
-    );
+    // Apply color mode setting (grayscale if black & white requested)
+    let pageBuffer = renderResult.pageBuffer;
+    if (job.settings.color === false) {
+      pageBuffer = await sharp(renderResult.pageBuffer)
+        .grayscale()
+        .webp({ quality: 90 })
+        .toBuffer();
+    }
 
-    // 9. Log view access in view_logs
+    // 8. Log view access in view_logs
     await db.insert(viewLogs).values({
       id: crypto.randomUUID(),
       jobId: job.id,
@@ -148,8 +145,8 @@ export async function GET(
       pageNo,
     });
 
-    // 10. Return watermarked WebP with strict no-cache headers
-    return new NextResponse(new Uint8Array(watermarkedBuffer), {
+    // 9. Return clean high-res WebP page (watermark overlay is applied client-side in preview only)
+    return new NextResponse(new Uint8Array(pageBuffer), {
       status: 200,
       headers: {
         "Content-Type": "image/webp",
