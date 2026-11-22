@@ -14,6 +14,7 @@ import {
 import { Switch3D } from "@/components/ui/Switch3D";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ConsentPrompt } from "@/components/layout/ConsentPrompt";
 import { cn } from "@/lib/utils";
 
 export interface MerchantShellProps {
@@ -163,6 +164,9 @@ export function MerchantShell({
             <ThemeToggle />
           </div>
         </header>
+
+        {/* DPDP Policy Version Consent Re-prompt (Phase 15 Task 2) */}
+        <ConsentPrompt />
 
         <main className="flex-1 p-4 md:p-8 max-w-6xl w-full mx-auto">
           {children}

@@ -12,3 +12,4 @@ export const MAX_PAGES_PER_DOCUMENT = 50;
 export const DEFAULT_RETENTION_DAYS = 30;
 export const SHEETS_PER_TREE_APPROX = 8333;
 export const SHEETS_PER_CANOPY_TIER = 10;
+export const CURRENT_POLICY_VERSION = "1.0";

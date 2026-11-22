@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { MapPin, FolderLock, History, User } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { ConsentPrompt } from "@/components/layout/ConsentPrompt";
 import { cn } from "@/lib/utils";
 
 export interface CustomerShellProps {
@@ -77,6 +78,9 @@ export function CustomerShell({
           </div>
         </div>
       </header>
+
+      {/* DPDP Policy Version Consent Re-prompt (Phase 15 Task 2) */}
+      <ConsentPrompt />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">

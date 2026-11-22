@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth/guards";
 import { reverseGeocode } from "@/lib/geo";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const rateCheck = await checkRateLimit(`geo:reverse:${ip}`, 30, 60);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: "Too many reverse geocoding requests. Please wait." },
+        { status: 429 }
+      );
     }
 
     const { searchParams } = new URL(req.url);

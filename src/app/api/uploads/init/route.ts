@@ -6,6 +6,7 @@ import { presignPut } from "@/lib/storage/client";
 import { generateDataKey, wrapDataKey } from "@/lib/storage/crypto";
 import { MAX_UPLOAD_MB, DEFAULT_RETENTION_DAYS } from "@/config/app";
 import { canUpload } from "@/lib/payments";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",
@@ -25,6 +26,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Unauthorized. Customer account required." },
         { status: 401 }
+      );
+    }
+
+    // Rate Limiting (Section 10 Phase 15 Task 6)
+    const uploadRateLimit = await checkRateLimit(
+      `upload:user:${session.user.id}`,
+      20,
+      600
+    );
+    if (!uploadRateLimit.success) {
+      return NextResponse.json(
+        {
+          error:
+            "Upload rate limit reached. Please wait before uploading more files.",
+        },
+        { status: 429 }
       );
     }
 

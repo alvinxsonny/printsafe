@@ -4,6 +4,7 @@ import { db } from "@/lib/db/client";
 import { users, customerProfiles } from "@/lib/db/schema";
 import { generateUniqueAlias } from "@/lib/auth/alias";
 import { auth } from "@/lib/auth";
+import { CURRENT_POLICY_VERSION } from "@/config/app";
 
 export async function POST(req: NextRequest) {
   try {
@@ -91,6 +92,8 @@ export async function POST(req: NextRequest) {
           .set({
             role: "merchant",
             alias: `Merchant ${user.id.slice(0, 4).toUpperCase()}`,
+            consentAt: new Date(),
+            policyVersion: CURRENT_POLICY_VERSION,
             updatedAt: new Date(),
           })
           .where(eq(users.id, user.id));
@@ -107,7 +110,7 @@ export async function POST(req: NextRequest) {
             role: "customer",
             alias: uniqueAlias,
             consentAt: new Date(),
-            policyVersion: "1.0",
+            policyVersion: CURRENT_POLICY_VERSION,
             updatedAt: new Date(),
           })
           .where(eq(users.id, user.id));

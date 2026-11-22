@@ -5,6 +5,7 @@ import { db } from "@/lib/db/client";
 import { shops, printJobs, auditLogs } from "@/lib/db/schema";
 import { verifyPasscode } from "@/lib/jobs/passcode";
 import { transitionJob } from "@/lib/jobs/machine";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 import crypto from "node:crypto";
 
 export async function POST(
@@ -49,6 +50,18 @@ export async function POST(
       return NextResponse.json(
         { error: "4-digit passcode required." },
         { status: 400 }
+      );
+    }
+
+    // Rate Limiting on Code Verification Attempts (Section 10 Phase 15 Task 6)
+    const codeRateLimit = await checkRateLimit(`code:verify:${jobId}`, 10, 300);
+    if (!codeRateLimit.success) {
+      return NextResponse.json(
+        {
+          error:
+            "Too many passcode attempts across this job. Please wait before retrying.",
+        },
+        { status: 429 }
       );
     }
 
