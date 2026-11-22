@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/schema";
 import { isShopLive } from "@/lib/db/queries";
 import { notifyShopLiveToNearbyCustomers } from "@/lib/notify/push";
+import { ensureGrowthSubscription } from "@/lib/merchant/dashboard";
 import crypto from "node:crypto";
 
 export async function GET() {
@@ -110,11 +111,15 @@ export async function PATCH(req: Request) {
           );
         }
 
-        const [sub] = await db
+        let [sub] = await db
           .select()
           .from(shopSubscriptions)
           .where(eq(shopSubscriptions.shopId, shop.id))
           .limit(1);
+
+        if (!sub && shop.status === "approved") {
+          sub = await ensureGrowthSubscription(shop.id);
+        }
 
         const validStatuses = ["trial", "active", "grace"];
         if (

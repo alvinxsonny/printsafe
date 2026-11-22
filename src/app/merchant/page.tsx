@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { requireMerchant } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
 import { shops } from "@/lib/db/schema";
+import { fetchMerchantDashboardData } from "@/lib/merchant/dashboard";
 import { MerchantDashboardClient } from "./MerchantDashboardClient";
 
 export const instant = false;
@@ -35,6 +36,11 @@ export default async function MerchantDashboard() {
     redirect("/merchant/pending");
   }
 
-  // Approved shop -> render interactive dashboard
-  return <MerchantDashboardClient />;
+  // Approved shop -> load dashboard data on server for instant initial paint
+  const dashboardData = await fetchMerchantDashboardData(user.id);
+  if (!dashboardData) {
+    redirect("/merchant/onboarding");
+  }
+
+  return <MerchantDashboardClient initialData={dashboardData} />;
 }

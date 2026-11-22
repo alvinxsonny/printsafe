@@ -5,13 +5,12 @@ import { db } from "@/lib/db/client";
 import {
   shops,
   shopReviews,
-  shopSubscriptions,
-  plans,
   auditLogs,
   notifications,
   users,
 } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/notify/email";
+import { ensureGrowthSubscription } from "@/lib/merchant/dashboard";
 
 export async function POST(
   req: NextRequest,
@@ -99,45 +98,8 @@ export async function POST(
         })
         .where(eq(shops.id, shopId));
 
-      // Create or update 30-day Growth trial subscription
-      const growthPlans = await db
-        .select()
-        .from(plans)
-        .where(eq(plans.code, "merchant_growth"))
-        .limit(1);
-
-      if (growthPlans.length > 0) {
-        const plan = growthPlans[0];
-        const periodStart = now;
-        const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
-
-        const existingSub = await db
-          .select()
-          .from(shopSubscriptions)
-          .where(eq(shopSubscriptions.shopId, shopId))
-          .limit(1);
-
-        if (existingSub.length > 0) {
-          await db
-            .update(shopSubscriptions)
-            .set({
-              planId: plan.id,
-              status: "trial",
-              periodStart,
-              periodEnd,
-            })
-            .where(eq(shopSubscriptions.id, existingSub[0].id));
-        } else {
-          await db.insert(shopSubscriptions).values({
-            id: crypto.randomUUID(),
-            shopId,
-            planId: plan.id,
-            status: "trial",
-            periodStart,
-            periodEnd,
-          });
-        }
-      }
+      // Ensure 30-day Growth trial subscription exists and is active
+      await ensureGrowthSubscription(shopId);
     } else if (decision === "changes_requested") {
       await db
         .update(shops)

@@ -21,11 +21,13 @@ interface NotificationItem {
 interface NotificationBellProps {
   targetHref: string;
   className?: string;
+  dropDirection?: "down" | "up";
 }
 
 export function NotificationBell({
   targetHref,
   className,
+  dropDirection = "down",
 }: NotificationBellProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentList, setRecentList] = useState<NotificationItem[]>([]);
@@ -118,7 +120,14 @@ export function NotificationBell({
 
       {/* Popover Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-xl z-50 p-4 space-y-3 extrude-md animate-in fade-in zoom-in-95">
+        <div
+          className={cn(
+            "w-80 sm:w-96 rounded-2xl bg-[var(--surface)] border border-[var(--border)] shadow-2xl z-50 p-4 space-y-3 extrude-md animate-in fade-in zoom-in-95",
+            dropDirection === "up"
+              ? "absolute left-0 bottom-full mb-2 origin-bottom-left"
+              : "absolute right-0 mt-2 origin-top-right"
+          )}
+        >
           <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-extrabold text-[var(--text)] tracking-tight">

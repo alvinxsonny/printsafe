@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   Printer,
   Clock,
-  Layers,
   Users,
   AlertTriangle,
   ChevronRight,
@@ -192,24 +191,6 @@ export function MerchantDashboardClient({
             <p className="text-xs text-[var(--text-muted)] mt-1">
               {shop.addressLine}, {shop.city}
             </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link href="/merchant/queue">
-              <Button3D
-                variant="primary"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Layers className="w-4 h-4" />
-                <span>Print Queue</span>
-                {usage.pendingJobs > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-black text-[var(--accent)] text-[10px] font-black flex items-center justify-center">
-                    {usage.pendingJobs}
-                  </span>
-                )}
-              </Button3D>
-            </Link>
           </div>
         </div>
 

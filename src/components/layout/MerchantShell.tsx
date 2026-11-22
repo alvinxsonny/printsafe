@@ -79,15 +79,15 @@ export function MerchantShell({
       <aside className="hidden md:flex w-64 flex-col border-r border-[var(--border)] bg-[var(--surface)] p-5 shrink-0 justify-between">
         <div className="flex flex-col gap-6">
           {/* Shop Header */}
-          <div className="flex items-center gap-3 pb-4 border-b border-[var(--border)]">
-            <div className="w-10 h-10 rounded-2xl bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)] extrude-sm">
-              <Store className="w-5 h-5" />
+          <div className="flex items-center gap-3 pb-4 border-b border-[var(--border)] min-w-0">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)]">
+              <Store className="w-5 h-5 shrink-0" />
             </div>
-            <div className="overflow-hidden">
+            <div className="overflow-hidden min-w-0">
               <h4 className="text-sm font-bold truncate text-[var(--text)]">
                 {shopName}
               </h4>
-              <p className="text-[11px] text-[var(--text-muted)] font-medium">
+              <p className="text-[11px] text-[var(--text-muted)] font-medium truncate">
                 Merchant Portal
               </p>
             </div>
@@ -135,23 +135,18 @@ export function MerchantShell({
         <div className="pt-4 border-t border-[var(--border)] flex flex-col gap-3">
           <button
             onClick={() => void performLogout()}
-            className="w-full h-8 px-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] hover:border-red-500 hover:text-red-500 text-xs font-bold text-[var(--text-muted)] flex items-center justify-center gap-1.5 transition-colors"
+            className="w-full h-8 px-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] hover:border-red-500 hover:text-red-500 text-xs font-bold text-[var(--text-muted)] flex items-center justify-center gap-1.5 transition-colors cursor-pointer select-none"
             title="Log Out of Merchant Portal"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Log Out</span>
           </button>
           <div className="flex items-center justify-between">
-            <Link
-              href="/"
-              className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text)]"
-            >
-              ← Home
-            </Link>
-            <div className="flex items-center gap-2">
-              <NotificationBell targetHref="/merchant/notifications" />
-              <ThemeToggle />
-            </div>
+            <NotificationBell
+              targetHref="/merchant/notifications"
+              dropDirection="up"
+            />
+            <ThemeToggle />
           </div>
         </div>
       </aside>
