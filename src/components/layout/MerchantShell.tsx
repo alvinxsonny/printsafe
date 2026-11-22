@@ -18,15 +18,47 @@ export interface MerchantShellProps {
   children: React.ReactNode;
   shopName?: string;
   isLiveInitial?: boolean;
+  onLiveChange?: (live: boolean) => void;
 }
 
 export function MerchantShell({
   children,
   shopName = "Your Print Shop",
   isLiveInitial = false,
+  onLiveChange,
 }: MerchantShellProps) {
   const pathname = usePathname();
   const [isLive, setIsLive] = useState(isLiveInitial);
+  const [isToggling, setIsToggling] = useState(false);
+
+  async function handleToggleLive(nextState: boolean) {
+    if (isToggling) return;
+    setIsToggling(true);
+    setIsLive(nextState); // optimistic update
+
+    try {
+      const res = await fetch("/api/merchant/shop", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ manualLive: nextState }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setIsLive(!nextState); // revert
+        alert(data.error || "Failed to update storefront status");
+      } else {
+        if (onLiveChange) {
+          onLiveChange(data.isLive);
+        }
+      }
+    } catch {
+      setIsLive(!nextState); // revert
+      alert("Network error updating live status.");
+    } finally {
+      setIsToggling(false);
+    }
+  }
 
   const navItems = [
     { label: "Dashboard", href: "/merchant", icon: LayoutDashboard },
@@ -62,7 +94,7 @@ export function MerchantShell({
             </span>
             <Switch3D
               checked={isLive}
-              onCheckedChange={setIsLive}
+              onCheckedChange={handleToggleLive}
               labelOn="LIVE"
               labelOff="OFFLINE"
               className="w-full"
@@ -118,7 +150,7 @@ export function MerchantShell({
           <div className="flex items-center gap-2">
             <Switch3D
               checked={isLive}
-              onCheckedChange={setIsLive}
+              onCheckedChange={handleToggleLive}
               className="w-28 h-10 text-[10px]"
             />
             <ThemeToggle />
