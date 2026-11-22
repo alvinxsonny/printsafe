@@ -4,6 +4,7 @@ import { emailOTP } from "better-auth/plugins";
 import { db } from "@/lib/db/client";
 import { users, sessions, accounts, verifications } from "@/lib/db/schema";
 import { sendOtpEmail } from "@/lib/notify/email";
+import { storeDevOtp } from "@/lib/auth/devOtp";
 
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
@@ -49,6 +50,7 @@ export const auth = betterAuth({
       otpLength: 6,
       expiresIn: 600, // 10 minutes
       async sendVerificationOTP({ email, otp, type }) {
+        storeDevOtp(email, otp);
         const role = type === "sign-in" ? "Account" : "New User";
         await sendOtpEmail(email, otp, role);
       },

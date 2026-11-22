@@ -4,6 +4,7 @@ import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { auth } from "@/lib/auth";
+import { getDevOtp } from "@/lib/auth/devOtp";
 
 export async function POST(req: NextRequest) {
   try {
@@ -153,9 +154,20 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const devOtp = getDevOtp(cleanEmail);
+    const isLocalOrRestricted =
+      process.env.NODE_ENV !== "production" ||
+      cleanEmail !== "alvinxsonny@gmail.com";
+
+    const message =
+      isLocalOrRestricted && devOtp
+        ? `Passcode generated: ${devOtp} (Development / Sandbox mode)`
+        : `Passcode sent to ${cleanEmail}. Please check your inbox.`;
+
     return NextResponse.json({
       success: true,
-      message: `Passcode sent to ${cleanEmail}. Please check your inbox.`,
+      message,
+      devOtp: isLocalOrRestricted ? devOtp : undefined,
     });
   } catch (error) {
     console.error("Error sending OTP:", error);

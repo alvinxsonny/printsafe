@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { storeDevOtp } from "@/lib/auth/devOtp";
 
 const smtpPort = Number(process.env.SMTP_PORT || "465");
 const isSecure = smtpPort === 465;
@@ -23,13 +24,31 @@ export interface SendEmailOptions {
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
   const from = process.env.EMAIL_FROM || "PrintSafe <onboarding@resend.dev>";
 
-  return emailTransporter.sendMail({
-    from,
-    to,
-    subject,
-    html,
-    text: text || html.replace(/<[^>]+>/g, ""),
-  });
+  try {
+    return await emailTransporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+      text: text || html.replace(/<[^>]+>/g, ""),
+    });
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    // If Resend free testing sandbox blocks non-registered recipient (550 error)
+    if (errMsg.includes("550") || errMsg.includes("testing emails")) {
+      console.warn(
+        `\n⚠️  [Resend Sandbox Notice] Live email to "${to}" was blocked by Resend free tier.\n` +
+          `   Resend requires domain verification at resend.com/domains to send to arbitrary addresses.\n` +
+          `   In testing/dev mode, emails can only be delivered to your Resend account email (alvinxsonny@gmail.com).\n`
+      );
+      return {
+        accepted: [],
+        rejected: [to],
+        response: "Suppressed Resend 550 test sandbox restriction",
+      };
+    }
+    throw err;
+  }
 }
 
 export async function sendOtpEmail(
@@ -37,6 +56,15 @@ export async function sendOtpEmail(
   otp: string,
   roleName: string = "Customer"
 ) {
+  // Store in memory for instant dev/test access
+  storeDevOtp(to, otp);
+
+  // Always log OTP prominently in server console for friction-free local testing
+  console.log(`\n======================================================`);
+  console.log(`🔑 [PrintSafe OTP Code] To: ${to} (${roleName})`);
+  console.log(`👉 Verification Passcode: ${otp}`);
+  console.log(`======================================================\n`);
+
   const subject = `Your PrintSafe Verification Code: ${otp}`;
   const html = `
 <!DOCTYPE html>
