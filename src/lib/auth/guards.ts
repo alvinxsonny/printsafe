@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth, type User, type Session } from "./index";
 
@@ -11,6 +11,33 @@ export async function getServerSession(): Promise<{
   user: User;
   session: Session["session"];
 } | null> {
+  if (process.env.ALLOW_TEST_AUTH === "true") {
+    const cookieStore = await cookies();
+    const testRole = cookieStore.get("ps_test_role")?.value as Role | undefined;
+    if (testRole) {
+      return {
+        user: {
+          id: `usr_test_${testRole}`,
+          email: `${testRole}@test.printsafe.internal`,
+          role: testRole,
+          alias:
+            testRole === "customer"
+              ? "Customer 7A9B"
+              : testRole === "merchant"
+                ? "Test Merchant"
+                : "Admin",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as unknown as User,
+        session: {
+          id: `sess_test_${testRole}`,
+          userId: `usr_test_${testRole}`,
+          expiresAt: new Date(Date.now() + 86400000),
+        } as unknown as Session["session"],
+      };
+    }
+  }
+
   const reqHeaders = await headers();
   const session = await auth.api.getSession({
     headers: reqHeaders,

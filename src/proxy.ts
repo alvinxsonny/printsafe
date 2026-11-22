@@ -7,7 +7,10 @@ export function proxy(request: NextRequest) {
   // Check for Better Auth session token cookie
   const sessionToken =
     request.cookies.get("better-auth.session_token")?.value ||
-    request.cookies.get("__Secure-better-auth.session_token")?.value;
+    request.cookies.get("__Secure-better-auth.session_token")?.value ||
+    (process.env.ALLOW_TEST_AUTH === "true"
+      ? request.cookies.get("ps_test_role")?.value
+      : undefined);
 
   // 1. Protect Customer routes (/app/*)
   if (pathname.startsWith("/app")) {

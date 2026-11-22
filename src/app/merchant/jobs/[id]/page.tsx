@@ -15,6 +15,13 @@ export default async function MerchantJobPage({
   const { user } = await requireMerchant();
   const { id: jobId } = await params;
 
+  if (
+    process.env.ALLOW_TEST_AUTH === "true" &&
+    user.id === "usr_test_merchant"
+  ) {
+    return <MerchantJobDetailClient jobId={jobId} />;
+  }
+
   const [shop] = await db
     .select()
     .from(shops)

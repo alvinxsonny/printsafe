@@ -48,7 +48,7 @@ Start a fresh chat for each phase if the agent gets confused. Commit to git afte
 - [x] Phase 13: Notifications
 - [x] Phase 14: Paper footprint tree and 3D polish
 - [x] Phase 15: Privacy, compliance and security hardening
-- [ ] Phase 16: Testing and QA
+- [x] Phase 16: Testing and QA
 - [ ] Phase 17: Deployment and launch checklist
 
 ---

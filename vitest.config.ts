@@ -10,6 +10,8 @@ try {
 export default defineConfig({
   test: {
     environment: "node",
+    include: ["tests/unit/**/*.test.ts"],
+    exclude: ["tests/e2e/**", "node_modules/**"],
   },
   resolve: {
     alias: {
