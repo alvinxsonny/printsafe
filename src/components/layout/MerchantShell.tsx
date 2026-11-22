@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -17,6 +17,14 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ConsentPrompt } from "@/components/layout/ConsentPrompt";
 import { performLogout } from "@/lib/auth/logout";
+import {
+  getCachedMerchantShopState,
+  updateMerchantShopState,
+  subscribeMerchantShopState,
+  fetchMerchantShopStatus,
+  isPlaceholderShopName,
+  MerchantShopState,
+} from "@/lib/merchant/merchantShopState";
 import { cn } from "@/lib/utils";
 
 export interface MerchantShellProps {
@@ -28,18 +36,71 @@ export interface MerchantShellProps {
 
 export function MerchantShell({
   children,
-  shopName = "Your Print Shop",
-  isLiveInitial = false,
+  shopName: propShopName,
+  isLiveInitial,
   onLiveChange,
 }: MerchantShellProps) {
   const pathname = usePathname();
-  const [isLive, setIsLive] = useState(isLiveInitial);
+
+  const [shopState, setShopState] = useState<MerchantShopState>(() => {
+    const cached = getCachedMerchantShopState();
+    const isLive =
+      typeof isLiveInitial === "boolean"
+        ? isLiveInitial
+        : (cached?.isLive ?? false);
+    const name =
+      propShopName && !isPlaceholderShopName(propShopName)
+        ? propShopName
+        : cached?.name || propShopName || "Print Shop";
+
+    return {
+      name,
+      isLive,
+      manualLive: isLive,
+      isLoaded: Boolean(cached?.isLoaded || typeof isLiveInitial === "boolean"),
+    };
+  });
+
   const [isToggling, setIsToggling] = useState(false);
+
+  useEffect(() => {
+    // 1. Subscribe to updates from other components / pages / tabs
+    const unsubscribe = subscribeMerchantShopState((newState) => {
+      setShopState((prev) => ({
+        ...prev,
+        ...newState,
+        name:
+          propShopName && !isPlaceholderShopName(propShopName)
+            ? propShopName
+            : newState.name || prev.name,
+      }));
+    });
+
+    // 2. Sync incoming props to store if provided
+    if (typeof isLiveInitial === "boolean") {
+      updateMerchantShopState({
+        isLive: isLiveInitial,
+        manualLive: isLiveInitial,
+        ...(propShopName && !isPlaceholderShopName(propShopName)
+          ? { name: propShopName }
+          : {}),
+      });
+    } else {
+      // 3. Otherwise fetch latest server state
+      void fetchMerchantShopStatus();
+    }
+
+    return () => {
+      unsubscribe();
+    };
+  }, [isLiveInitial, propShopName]);
 
   async function handleToggleLive(nextState: boolean) {
     if (isToggling) return;
     setIsToggling(true);
-    setIsLive(nextState); // optimistic update
+
+    // Optimistic update across the merchant app
+    updateMerchantShopState({ isLive: nextState, manualLive: nextState });
 
     try {
       const res = await fetch("/api/merchant/shop", {
@@ -50,20 +111,34 @@ export function MerchantShell({
 
       const data = await res.json();
       if (!res.ok) {
-        setIsLive(!nextState); // revert
+        // Revert
+        updateMerchantShopState({ isLive: !nextState, manualLive: !nextState });
         alert(data.error || "Failed to update storefront status");
       } else {
+        updateMerchantShopState({
+          isLive: Boolean(data.isLive),
+          manualLive: Boolean(data.shop?.manualLive),
+          ...(data.shop?.name ? { name: data.shop.name } : {}),
+        });
         if (onLiveChange) {
           onLiveChange(data.isLive);
         }
       }
     } catch {
-      setIsLive(!nextState); // revert
+      // Revert
+      updateMerchantShopState({ isLive: !nextState, manualLive: !nextState });
       alert("Network error updating live status.");
     } finally {
       setIsToggling(false);
     }
   }
+
+  const effectiveShopName =
+    propShopName && !isPlaceholderShopName(propShopName)
+      ? propShopName
+      : shopState.name || "Print Shop";
+
+  const isLive = shopState.isLive;
 
   const navItems = [
     { label: "Dashboard", href: "/merchant", icon: LayoutDashboard },
@@ -85,7 +160,7 @@ export function MerchantShell({
             </div>
             <div className="overflow-hidden min-w-0">
               <h4 className="text-sm font-bold truncate text-[var(--text)]">
-                {shopName}
+                {effectiveShopName}
               </h4>
               <p className="text-[11px] text-[var(--text-muted)] font-medium truncate">
                 Merchant Portal
@@ -158,7 +233,7 @@ export function MerchantShell({
           <div className="flex items-center gap-2">
             <Store className="w-5 h-5 text-[var(--accent)]" />
             <h4 className="text-sm font-bold truncate max-w-[140px] text-[var(--text)]">
-              {shopName}
+              {effectiveShopName}
             </h4>
           </div>
           <div className="flex items-center gap-2">

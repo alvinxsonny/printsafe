@@ -247,7 +247,7 @@ export function MerchantSettingsClient() {
 
   if (isLoading || !shop) {
     return (
-      <MerchantShell shopName="Shop Settings">
+      <MerchantShell>
         <div className="p-16 flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
           <p className="text-xs text-[var(--text-muted)] font-semibold">

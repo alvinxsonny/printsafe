@@ -16,6 +16,10 @@ import {
 } from "lucide-react";
 import { MerchantShell } from "@/components/layout/MerchantShell";
 import { Card3D, Button3D, Badge, Switch3D } from "@/components/ui";
+import {
+  updateMerchantShopState,
+  subscribeMerchantShopState,
+} from "@/lib/merchant/merchantShopState";
 
 interface DashboardData {
   shop: {
@@ -100,6 +104,35 @@ export function MerchantDashboardClient({
     return () => clearInterval(interval);
   }, [fetchDashboard]);
 
+  // Keep shared merchant shop state synchronized
+  useEffect(() => {
+    if (data?.shop) {
+      updateMerchantShopState({
+        name: data.shop.name,
+        isLive: data.isLive,
+        manualLive: data.shop.manualLive,
+      });
+    }
+  }, [data]);
+
+  // Listen for sidebar toggle changes
+  useEffect(() => {
+    const unsub = subscribeMerchantShopState((state) => {
+      setData((prev) => {
+        if (!prev) return prev;
+        if (prev.isLive !== state.isLive) {
+          return {
+            ...prev,
+            isLive: state.isLive,
+            shop: { ...prev.shop, manualLive: state.manualLive },
+          };
+        }
+        return prev;
+      });
+    });
+    return unsub;
+  }, []);
+
   async function handleToggleLive(nextState: boolean) {
     if (!data || isTogglingLive) return;
     setIsTogglingLive(true);
@@ -110,6 +143,7 @@ export function MerchantDashboardClient({
       isLive: nextState,
       shop: { ...data.shop, manualLive: nextState },
     });
+    updateMerchantShopState({ isLive: nextState, manualLive: nextState });
 
     try {
       const res = await fetch("/api/merchant/shop", {
@@ -126,8 +160,14 @@ export function MerchantDashboardClient({
           isLive: !nextState,
           shop: { ...data.shop, manualLive: !nextState },
         });
+        updateMerchantShopState({ isLive: !nextState, manualLive: !nextState });
         alert(resJson.error || "Failed to toggle live state.");
       } else {
+        updateMerchantShopState({
+          isLive: Boolean(resJson.isLive),
+          manualLive: Boolean(resJson.shop?.manualLive),
+          ...(resJson.shop?.name ? { name: resJson.shop.name } : {}),
+        });
         void fetchDashboard();
       }
     } catch {
@@ -137,6 +177,7 @@ export function MerchantDashboardClient({
         isLive: !nextState,
         shop: { ...data.shop, manualLive: !nextState },
       });
+      updateMerchantShopState({ isLive: !nextState, manualLive: !nextState });
       alert("Network error updating live state.");
     } finally {
       setIsTogglingLive(false);
@@ -171,7 +212,7 @@ export function MerchantDashboardClient({
   return (
     <MerchantShell
       shopName={shop.name}
-      isLiveInitial={shop.manualLive}
+      isLiveInitial={isLive}
       onLiveChange={(live) => setData({ ...data, isLive: live })}
     >
       <div className="space-y-6">

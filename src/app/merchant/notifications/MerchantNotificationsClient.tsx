@@ -108,7 +108,7 @@ export function MerchantNotificationsClient() {
   }
 
   return (
-    <MerchantShell shopName="Notifications">
+    <MerchantShell>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--border)]">

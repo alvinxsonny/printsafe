@@ -201,7 +201,7 @@ export function MerchantJobDetailClient({ jobId }: { jobId: string }) {
 
   if (isLoading) {
     return (
-      <MerchantShell shopName="Job Detail">
+      <MerchantShell>
         <div className="p-16 flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
           <p className="text-xs text-[var(--text-muted)] font-semibold">
@@ -214,7 +214,7 @@ export function MerchantJobDetailClient({ jobId }: { jobId: string }) {
 
   if (!job) {
     return (
-      <MerchantShell shopName="Job Detail">
+      <MerchantShell>
         <div className="max-w-md mx-auto p-8 text-center space-y-4">
           <AlertCircle className="w-8 h-8 text-[var(--danger)] mx-auto" />
           <h2 className="text-base font-bold">Print Order Not Found</h2>
@@ -252,7 +252,7 @@ export function MerchantJobDetailClient({ jobId }: { jobId: string }) {
   }
 
   return (
-    <MerchantShell shopName="Job Inspection">
+    <MerchantShell>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
