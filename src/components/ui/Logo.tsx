@@ -21,22 +21,15 @@ export function Logo({
     <div
       className={cn("inline-flex items-center gap-2.5 select-none", className)}
     >
-      <div
-        className={cn(
-          "relative shrink-0 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] extrude-sm flex items-center justify-center p-0.5 shadow-sm",
-          imageClassName
-        )}
+      <Image
+        src="/logo.png"
+        alt="PrintSafe Logo"
+        width={size}
+        height={size}
+        priority
+        className={cn("shrink-0 object-contain", imageClassName)}
         style={{ width: size, height: size }}
-      >
-        <Image
-          src="/logo.png"
-          alt="PrintSafe Logo"
-          width={size * 2}
-          height={size * 2}
-          priority
-          className="object-contain w-full h-full rounded-lg"
-        />
-      </div>
+      />
       {showText && (
         <span
           className={cn(

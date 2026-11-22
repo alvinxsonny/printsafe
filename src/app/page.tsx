@@ -1,13 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import {
   ShieldCheck,
   EyeOff,
   Clock,
   Trash2,
-  Lock,
   ArrowRight,
   FileText,
   CheckCircle,
@@ -25,6 +25,9 @@ import {
 import { FootprintTree } from "@/components/tree";
 
 export default function LandingPage() {
+  const [pricingTab, setPricingTab] = useState<"customer" | "merchant">(
+    "customer"
+  );
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col selection:bg-[var(--accent-fill)] selection:text-zinc-950">
       {/* Navigation Bar */}
@@ -54,17 +57,21 @@ export default function LandingPage() {
               Privacy Guarantees
             </a>
             <a
-              href="#limits"
+              href="#plans"
               className="hover:text-[var(--text)] transition-colors"
             >
-              Honest Limits
+              Plans &amp; Pricing
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link href="/login">
-              <Button3D variant="outline" size="sm">
+              <Button3D
+                variant="outline"
+                size="sm"
+                className="h-9 px-3.5 font-bold"
+              >
                 Log In
               </Button3D>
             </Link>
@@ -72,8 +79,8 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      {/* Hero Section - Fills viewport height before scrolling */}
+      <section className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Text Column */}
           <div className="lg:col-span-7 flex flex-col gap-6 text-center lg:text-left">
@@ -401,36 +408,327 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Honest Limits Note */}
+      {/* MVP Plans & Pricing */}
       <section
-        id="limits"
-        className="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full"
+        id="plans"
+        className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
       >
-        <div className="p-8 rounded-[28px] bg-[var(--surface-2)] border-2 border-[var(--border)] extrude-sm">
-          <div className="flex items-start gap-4">
-            <div className="p-3 rounded-2xl bg-[var(--surface)] border border-[var(--border)] text-[var(--warm)] extrude-sm shrink-0">
-              <Lock className="w-6 h-6" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <h3 className="text-xl font-bold text-[var(--text)]">
-                Our Honest Limits
-              </h3>
-              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                A web application cannot physically prevent someone from taking
-                a phone photo of a monitor, taking a desktop screenshot, or
-                choosing &quot;Save as PDF&quot; inside the browser&apos;s
-                system print dialog.
-              </p>
-              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                PrintSafe makes leaks difficult, strictly traceable, and
-                short-lived through forensic watermarks, encrypted streams,
-                right-click deterrence, and automatic expiration. A dedicated
-                desktop Print Agent is planned for future versions to close the
-                Save-as-PDF gap.
-              </p>
-            </div>
+        <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
+          <Badge variant="live" size="md">
+            Transparent Pricing &bull; No Hidden Fees
+          </Badge>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text)]">
+            Simple Plans for Customers &amp; Print Shops
+          </h2>
+          <p className="text-base sm:text-lg text-[var(--text-muted)]">
+            Pick the plan tailored to your printing needs. Upgrade or cancel
+            anytime.
+          </p>
+
+          {/* Tab Selector */}
+          <div className="inline-flex p-1 rounded-md bg-[var(--surface-2)] border border-[var(--border)] gap-1">
+            <button
+              onClick={() => setPricingTab("customer")}
+              className={cn(
+                "px-5 py-2 text-xs font-bold rounded-md transition-all cursor-pointer",
+                pricingTab === "customer"
+                  ? "bg-[var(--surface)] text-[var(--text)] extrude-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--text)]"
+              )}
+            >
+              For Customers
+            </button>
+            <button
+              onClick={() => setPricingTab("merchant")}
+              className={cn(
+                "px-5 py-2 text-xs font-bold rounded-md transition-all cursor-pointer",
+                pricingTab === "merchant"
+                  ? "bg-[var(--surface)] text-[var(--text)] extrude-sm"
+                  : "text-[var(--text-muted)] hover:text-[var(--text)]"
+              )}
+            >
+              For Print Shops
+            </button>
           </div>
         </div>
+
+        {pricingTab === "customer" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Customer Free */}
+            <Card3D className="flex flex-col justify-between p-8 bg-[var(--surface)] border border-[var(--border)] extrude-md">
+              <div className="space-y-6">
+                <div>
+                  <Badge variant="approved" size="sm">
+                    Free Forever
+                  </Badge>
+                  <h3 className="text-2xl font-extrabold text-[var(--text)] mt-2">
+                    Free
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    Zero-trust security for occasional personal printing.
+                  </p>
+                </div>
+                <div className="text-3xl font-extrabold text-[var(--text)]">
+                  ₹0{" "}
+                  <span className="text-xs font-normal text-[var(--text-muted)]">
+                    / month
+                  </span>
+                </div>
+                <ul className="space-y-3 text-xs text-[var(--text)]">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      <strong>10 uploads</strong> per month
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      <strong>100 MB</strong> encrypted vault storage
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      Anonymous aliases (e.g. &quot;Customer A7F2&quot;)
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>Dynamic forensic watermarking</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>Auto-expiring 4-digit handover codes</span>
+                  </li>
+                </ul>
+              </div>
+              <Link href="/signup" className="pt-8">
+                <Button3D variant="outline" size="md" className="w-full">
+                  Start Free
+                </Button3D>
+              </Link>
+            </Card3D>
+
+            {/* Customer Plus */}
+            <Card3D className="flex flex-col justify-between p-8 bg-[var(--surface)] border-2 border-[var(--accent)] extrude-lg relative">
+              <div className="absolute -top-3 right-6 px-3 py-0.5 rounded-full bg-[var(--accent-fill)] text-zinc-950 text-[10px] font-black uppercase tracking-wider extrude-accent-sm">
+                Recommended
+              </div>
+              <div className="space-y-6">
+                <div>
+                  <Badge variant="live" size="sm">
+                    Plus Tier
+                  </Badge>
+                  <h3 className="text-2xl font-extrabold text-[var(--text)] mt-2">
+                    Plus
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    For frequent print requests, students &amp; professionals.
+                  </p>
+                </div>
+                <div className="text-3xl font-extrabold text-[var(--text)]">
+                  ₹49{" "}
+                  <span className="text-xs font-normal text-[var(--text-muted)]">
+                    / month
+                  </span>
+                </div>
+                <ul className="space-y-3 text-xs text-[var(--text)]">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      <strong>100 uploads</strong> per month
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      <strong>2 GB (2048 MB)</strong> encrypted vault
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>Priority upload &amp; processing</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>Multi-device vault sync</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>Full anonymous privacy protection</span>
+                  </li>
+                </ul>
+              </div>
+              <Link href="/signup" className="pt-8">
+                <Button3D variant="primary" size="md" className="w-full">
+                  Get Plus
+                </Button3D>
+              </Link>
+            </Card3D>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {/* Merchant Starter */}
+            <Card3D className="flex flex-col justify-between p-6 bg-[var(--surface)] border border-[var(--border)] extrude-md">
+              <div className="space-y-5">
+                <div>
+                  <Badge variant="approved" size="sm">
+                    Starter
+                  </Badge>
+                  <h3 className="text-xl font-extrabold text-[var(--text)] mt-2">
+                    Starter
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    For neighborhood Xerox &amp; single-operator copy shops.
+                  </p>
+                </div>
+                <div className="text-3xl font-extrabold text-[var(--text)]">
+                  ₹299{" "}
+                  <span className="text-xs font-normal text-[var(--text-muted)]">
+                    / month
+                  </span>
+                </div>
+                <ul className="space-y-2.5 text-xs text-[var(--text)]">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      <strong>100 print jobs</strong> / month
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      <strong>50 customers</strong> / month
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>1 device terminal &amp; 1 staff login</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>Locked secure print viewer</span>
+                  </li>
+                </ul>
+              </div>
+              <Link href="/merchant/signup" className="pt-6">
+                <Button3D variant="outline" size="sm" className="w-full">
+                  Register Shop
+                </Button3D>
+              </Link>
+            </Card3D>
+
+            {/* Merchant Growth */}
+            <Card3D className="flex flex-col justify-between p-6 bg-[var(--surface)] border-2 border-[var(--accent)] extrude-lg relative">
+              <div className="absolute -top-3 right-6 px-3 py-0.5 rounded-full bg-[var(--accent-fill)] text-zinc-950 text-[10px] font-black uppercase tracking-wider extrude-accent-sm">
+                Most Popular
+              </div>
+              <div className="space-y-5">
+                <div>
+                  <Badge variant="live" size="sm">
+                    Growth
+                  </Badge>
+                  <h3 className="text-xl font-extrabold text-[var(--text)] mt-2">
+                    Growth
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    For busy print centers near colleges and offices.
+                  </p>
+                </div>
+                <div className="text-3xl font-extrabold text-[var(--text)]">
+                  ₹599{" "}
+                  <span className="text-xs font-normal text-[var(--text-muted)]">
+                    / month
+                  </span>
+                </div>
+                <ul className="space-y-2.5 text-xs text-[var(--text)]">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      <strong>500 print jobs</strong> / month
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      <strong>250 customers</strong> / month
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>2 terminals &amp; 2 staff logins</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      <strong>Priority listing</strong> on customer map
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>Real-time queue &amp; code verification</span>
+                  </li>
+                </ul>
+              </div>
+              <Link href="/merchant/signup" className="pt-6">
+                <Button3D variant="primary" size="sm" className="w-full">
+                  Start Growth
+                </Button3D>
+              </Link>
+            </Card3D>
+
+            {/* Merchant Pro */}
+            <Card3D className="flex flex-col justify-between p-6 bg-[var(--surface)] border border-[var(--border)] extrude-md">
+              <div className="space-y-5">
+                <div>
+                  <Badge variant="approved" size="sm">
+                    Pro
+                  </Badge>
+                  <h3 className="text-xl font-extrabold text-[var(--text)] mt-2">
+                    Pro
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    For high-volume commercial printing enterprises.
+                  </p>
+                </div>
+                <div className="text-3xl font-extrabold text-[var(--text)]">
+                  ₹999{" "}
+                  <span className="text-xs font-normal text-[var(--text-muted)]">
+                    / month
+                  </span>
+                </div>
+                <ul className="space-y-2.5 text-xs text-[var(--text)]">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      <strong>1,500 print jobs</strong> / month
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>
+                      <strong>Unlimited customers</strong>
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>5 terminals &amp; 5 staff logins</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                    <span>Analytics &amp; revenue insights</span>
+                  </li>
+                </ul>
+              </div>
+              <Link href="/merchant/signup" className="pt-6">
+                <Button3D variant="outline" size="sm" className="w-full">
+                  Get Pro
+                </Button3D>
+              </Link>
+            </Card3D>
+          </div>
+        )}
       </section>
 
       {/* Bottom CTA Banner */}
@@ -497,13 +795,22 @@ export default function LandingPage() {
             >
               How It Works
             </Link>
-            <Link
-              href="/dev/ui"
-              className="text-[var(--accent)] hover:underline"
-            >
-              Component Kit (Dev)
-            </Link>
           </div>
+        </div>
+
+        {/* Honest Limits Note inside footer as short small font note */}
+        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-[var(--border)] text-[11px] text-[var(--text-muted)] leading-relaxed">
+          <p>
+            <strong className="text-[var(--text)] font-semibold">
+              Honest Limits Note:
+            </strong>{" "}
+            A web application cannot physically prevent someone from taking a
+            phone photo of a screen, taking a desktop screenshot, or choosing
+            &quot;Save as PDF&quot; in a browser&apos;s system print dialog.
+            PrintSafe makes leaks difficult, strictly traceable, and short-lived
+            via forensic watermarks, encrypted memory streams, right-click
+            deterrence, and auto-expiring access tokens.
+          </p>
         </div>
       </footer>
     </div>

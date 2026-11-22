@@ -43,12 +43,12 @@
   }
 
   .dark {
-    /* True OLED Pitch Black theme */
-    --bg: #000000;
-    --surface: #0a0a0a;
-    --surface-2: #141414;
-    --text: #fafafa;
-    --text-muted: #a1a1aa;
+    /* Refined Charcoal Dark theme */
+    --bg: #121215;
+    --surface: #1a1a1f;
+    --surface-2: #24242a;
+    --text: #f4f4f6;
+    --text-muted: #9e9ea7;
     --accent: #22c55e;
     --accent-fill: #22c55e;
     --accent-fill-darker: #16a34a;
@@ -60,12 +60,12 @@
     --danger-fill: #f87171;
     --danger-darker: #b91c1c;
 
-    --edge-1: #1f1f23;
-    --edge-2: #141416;
-    --edge-3: #0a0a0c;
-    --shadow-ambient: rgba(0, 0, 0, 0.95);
+    --edge-1: #2a2a32;
+    --edge-2: #1e1e24;
+    --edge-3: #141418;
+    --shadow-ambient: rgba(0, 0, 0, 0.65);
 
-    --border: #27272a;
+    --border: #2e2e36;
   }
 }
 
@@ -107,7 +107,7 @@ body::before {
 
 .dark body::before,
 html.dark body::before {
-  opacity: 0.14;
+  opacity: 0.1;
   mix-blend-mode: screen;
 }
 

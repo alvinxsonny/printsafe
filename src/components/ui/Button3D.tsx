@@ -29,9 +29,9 @@ export const Button3D = React.forwardRef<HTMLButtonElement, Button3DProps>(
       "disabled:opacity-50 disabled:pointer-events-none disabled:transform-none disabled:shadow-none";
 
     const sizeStyles = {
-      sm: "h-9 px-3.5 text-xs rounded-xl gap-1.5",
-      md: "h-11 px-5 text-sm rounded-2xl gap-2",
-      lg: "h-14 px-7 text-base rounded-2xl gap-2.5",
+      sm: "h-9 px-3.5 text-xs rounded-md gap-1.5",
+      md: "h-11 px-5 text-sm rounded-md gap-2",
+      lg: "h-13 px-6 text-base rounded-md gap-2.5",
     };
 
     const variantStyles = {
@@ -45,7 +45,7 @@ export const Button3D = React.forwardRef<HTMLButtonElement, Button3DProps>(
         "bg-[var(--danger-fill)] text-white extrude-danger-md hover:-translate-y-0.5 " +
         "active:translate-y-1 active:shadow-none border border-[var(--danger-darker)]/40",
       outline:
-        "bg-transparent text-[var(--text)] border-2 border-[var(--border)] hover:bg-[var(--surface-2)] " +
+        "bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] extrude-sm hover:border-[var(--accent)] " +
         "hover:-translate-y-0.5 active:translate-y-0.5",
       ghost:
         "bg-transparent text-[var(--text)] hover:bg-[var(--surface-2)] active:translate-y-0.5",

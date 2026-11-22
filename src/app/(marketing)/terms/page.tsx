@@ -7,7 +7,6 @@ import {
   CreditCard,
   Scale,
   ArrowLeft,
-  AlertTriangle,
   Store,
   Clock,
 } from "lucide-react";
@@ -33,22 +32,6 @@ export default function TermsOfServicePage() {
             <Badge variant="live" size="sm">
               Terms v{CURRENT_POLICY_VERSION}
             </Badge>
-          </div>
-        </div>
-
-        {/* Legal Review Warning Banner (Task 1) */}
-        <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-          <div className="text-xs space-y-1">
-            <p className="font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-              Draft: Have a lawyer review before launch
-            </p>
-            <p className="text-[var(--text-muted)] leading-relaxed">
-              These terms of service establish rights and obligations between
-              PrintSafe, customers, and participating merchants. This is a draft
-              specification prepared for MVP release and subject to final formal
-              legal certification.
-            </p>
           </div>
         </div>
 

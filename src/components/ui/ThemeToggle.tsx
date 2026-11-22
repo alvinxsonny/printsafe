@@ -25,21 +25,21 @@ export function ThemeToggle({ className }: { className?: string }) {
           : "Toggle theme"
       }
       className={cn(
-        "relative flex items-center justify-center w-10 h-10 rounded-2xl",
+        "relative flex items-center justify-center w-9 h-9 rounded-md",
         "bg-[var(--surface)] text-[var(--text)] border border-[var(--border)]",
-        "extrude-sm hover:-translate-y-0.5 active:translate-y-1 active:shadow-none transition-all duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
+        "extrude-sm hover:-translate-y-0.5 active:translate-y-0.5 hover:border-[var(--accent)] transition-all duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] cursor-pointer select-none",
         className
       )}
     >
       {mounted ? (
         resolvedTheme === "dark" ? (
-          <Sun className="w-5 h-5 text-[var(--warm-fill)] transition-transform rotate-0 scale-100" />
+          <Sun className="w-4 h-4 text-[var(--warm-fill)] transition-transform rotate-0 scale-100" />
         ) : (
-          <Moon className="w-5 h-5 text-[var(--info)] transition-transform rotate-0 scale-100" />
+          <Moon className="w-4 h-4 text-[var(--info)] transition-transform rotate-0 scale-100" />
         )
       ) : (
-        <span className="w-5 h-5 inline-block" aria-hidden="true" />
+        <span className="w-4 h-4 inline-block" aria-hidden="true" />
       )}
     </button>
   );

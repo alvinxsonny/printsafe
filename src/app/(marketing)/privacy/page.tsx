@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   Server,
   Trash2,
-  AlertTriangle,
   UserCheck,
 } from "lucide-react";
 import { CURRENT_POLICY_VERSION } from "@/config/app";
@@ -34,23 +33,6 @@ export default function PrivacyNoticePage() {
             <Badge variant="live" size="sm">
               Policy v{CURRENT_POLICY_VERSION}
             </Badge>
-          </div>
-        </div>
-
-        {/* Legal Review Warning Banner (Task 1) */}
-        <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-          <div className="text-xs space-y-1">
-            <p className="font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-              Draft: Have a lawyer review before launch
-            </p>
-            <p className="text-[var(--text-muted)] leading-relaxed">
-              This privacy notice outlines PrintSafe&apos;s zero-trust
-              architecture, data protection principles, and compliance roadmap
-              under the Digital Personal Data Protection (DPDP) Act, 2023. It is
-              a draft specification subject to final legal counsel
-              certification.
-            </p>
           </div>
         </div>
 
