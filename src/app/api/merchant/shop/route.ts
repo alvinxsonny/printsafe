@@ -10,6 +10,7 @@ import {
   auditLogs,
 } from "@/lib/db/schema";
 import { isShopLive } from "@/lib/db/queries";
+import { notifyShopLiveToNearbyCustomers } from "@/lib/notify/push";
 import crypto from "node:crypto";
 
 export async function GET() {
@@ -258,6 +259,23 @@ export async function PATCH(req: Request) {
       .limit(1);
 
     const isLive = isShopLive(updatedShop, hours, sub || null);
+
+    // If shop just went live from an offline state, notify opted-in customers within range
+    if (
+      body.manualLive === true &&
+      !shop.manualLive &&
+      isLive &&
+      updatedShop.latitude &&
+      updatedShop.longitude
+    ) {
+      void notifyShopLiveToNearbyCustomers({
+        id: updatedShop.id,
+        name: updatedShop.name,
+        latitude: Number(updatedShop.latitude),
+        longitude: Number(updatedShop.longitude),
+        locality: updatedShop.locality,
+      });
+    }
 
     return NextResponse.json({
       success: true,

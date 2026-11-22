@@ -6,6 +6,8 @@ import {
   auditLogs,
   notifications,
   documents,
+  shops,
+  users,
 } from "@/lib/db/schema";
 import {
   PASSCODE_TTL_MINUTES,
@@ -15,6 +17,11 @@ import {
 import { generatePasscode, encryptPasscode } from "./passcode";
 import { deleteObject } from "@/lib/storage/client";
 import { processJobRefund } from "@/lib/payments/refund";
+import {
+  sendJobAcceptedEmail,
+  sendJobRejectedEmail,
+  sendPushNotification,
+} from "@/lib/notify";
 
 export type PrintJobStatus =
   | "requested"
@@ -323,7 +330,7 @@ export async function transitionJob(params: {
     createdAt: now,
   });
 
-  // 5. Emit Notification to Opposite Party
+  // 5. Emit In-App Notification and Web Push to Opposite Party
   const notifyRecipientId =
     actor.role === "customer" ? job.shopId : job.customerId;
 
@@ -338,6 +345,56 @@ export async function transitionJob(params: {
     },
     createdAt: now,
   });
+
+  // Web Push to Opposite Party
+  void sendPushNotification(notifyRecipientId, {
+    title: "PrintSafe Update",
+    body: `Print job #${jobId.slice(-6).toUpperCase()} status is now ${newStatus}.`,
+    url:
+      actor.role === "customer"
+        ? `/merchant/jobs/${jobId}`
+        : `/app/jobs/${jobId}`,
+  });
+
+  // Key Event Transactional Emails (Section 13 Task 2)
+  if (action === "accept" || action === "reject") {
+    void (async () => {
+      try {
+        const [customer] = await db
+          .select({ email: users.email })
+          .from(users)
+          .where(eq(users.id, job.customerId))
+          .limit(1);
+
+        const [shop] = await db
+          .select({ name: shops.name })
+          .from(shops)
+          .where(eq(shops.id, job.shopId))
+          .limit(1);
+
+        if (customer?.email && shop?.name) {
+          if (action === "accept") {
+            await sendJobAcceptedEmail({
+              to: customer.email,
+              shopName: shop.name,
+              jobId: job.id,
+              mode: job.mode,
+              passcode,
+            });
+          } else if (action === "reject") {
+            await sendJobRejectedEmail({
+              to: customer.email,
+              shopName: shop.name,
+              jobId: job.id,
+              reason,
+            });
+          }
+        }
+      } catch (emailErr) {
+        console.warn("Failed to send job transition email:", emailErr);
+      }
+    })();
+  }
 
   return {
     success: true,

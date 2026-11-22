@@ -19,6 +19,7 @@ import { decryptPasscode } from "@/lib/jobs/passcode";
 import { isJobExpired } from "@/lib/jobs/machine";
 import { REQUEST_EXPIRY_MINUTES } from "@/config/app";
 import { canAcceptJob } from "@/lib/payments";
+import { sendPushNotification } from "@/lib/notify";
 
 /**
  * GET /api/jobs: Returns customer's print jobs history and active requests.
@@ -341,6 +342,13 @@ export async function POST(req: NextRequest) {
         message: "New print request waiting in your queue.",
       },
       createdAt: now,
+    });
+
+    // 9. Send Web Push to Shop Owner
+    void sendPushNotification(shop.ownerId, {
+      title: "New Print Request!",
+      body: `New order received for ${quoteResult.sheets} sheets.`,
+      url: "/merchant/queue",
     });
 
     return NextResponse.json({

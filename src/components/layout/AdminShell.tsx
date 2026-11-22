@@ -9,8 +9,10 @@ import {
   Layers,
   ScrollText,
   BarChart3,
+  Bell,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { cn } from "@/lib/utils";
 
 export interface AdminShellProps {
@@ -23,6 +25,7 @@ export function AdminShell({ children }: AdminShellProps) {
   const navItems = [
     { label: "Overview", href: "/admin", icon: BarChart3 },
     { label: "Merchants Queue", href: "/admin/merchants", icon: Store },
+    { label: "Notifications", href: "/admin/notifications", icon: Bell },
     { label: "Platform Plans", href: "/admin/plans", icon: Layers },
     { label: "Audit Log", href: "/admin/audit", icon: ScrollText },
   ];
@@ -71,7 +74,7 @@ export function AdminShell({ children }: AdminShellProps) {
           </nav>
         </div>
 
-        {/* Footer */}
+        {/* Footer with NotificationBell & ThemeToggle */}
         <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between">
           <Link
             href="/"
@@ -79,7 +82,10 @@ export function AdminShell({ children }: AdminShellProps) {
           >
             ← Landing
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <NotificationBell targetHref="/admin/notifications" />
+            <ThemeToggle />
+          </div>
         </div>
       </aside>
 

@@ -19,6 +19,12 @@ export const metadata: Metadata = {
   title: "PrintSafe — Print anywhere. Share nothing.",
   description:
     "Zero-trust document printing platform protecting customer documents from Xerox shop leaks.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PrintSafe",
+  },
 };
 
 export default function RootLayout({

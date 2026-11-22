@@ -85,3 +85,89 @@ export async function sendOtpEmail(
 
   return sendEmail({ to, subject, html });
 }
+
+export async function sendJobAcceptedEmail(params: {
+  to: string;
+  shopName: string;
+  jobId: string;
+  mode: "near" | "far";
+  passcode?: string;
+}) {
+  const { to, shopName, jobId, mode, passcode } = params;
+  const subject = `PrintSafe: Your print request was accepted by ${shopName}`;
+  const shortId = jobId.slice(-6).toUpperCase();
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin: 0; padding: 32px 16px; background-color: #F5F2EA; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #FBF9F3; border: 1px solid #DED7C6; border-radius: 24px; padding: 32px;">
+    <tr>
+      <td>
+        <div style="display: inline-block; padding: 6px 14px; background-color: #3DD68C; color: #14213D; font-weight: 700; font-size: 12px; border-radius: 9999px; margin-bottom: 16px;">
+          Order Accepted &bull; #${shortId}
+        </div>
+        <h1 style="color: #14213D; font-size: 22px; font-weight: 800; margin: 0 0 12px 0;">
+          ${shopName} accepted your request
+        </h1>
+        <p style="color: #4A5568; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+          ${
+            mode === "near"
+              ? `Your walk-in order is ready. When you arrive at the counter, show your secure 4-digit code: <strong style="font-size: 18px; color: #12724A; letter-spacing: 2px;">${passcode || "See in app"}</strong>`
+              : `Your remote order has been accepted. Please open the PrintSafe app to complete payment and release your document to the printer queue.`
+          }
+        </p>
+        <p style="color: #718096; font-size: 12px; margin: 0;">
+          PrintSafe protects your documents: the merchant views rendered pages directly and cannot save or forward your files.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+  return sendEmail({ to, subject, html });
+}
+
+export async function sendJobRejectedEmail(params: {
+  to: string;
+  shopName: string;
+  jobId: string;
+  reason?: string;
+}) {
+  const { to, shopName, jobId, reason } = params;
+  const shortId = jobId.slice(-6).toUpperCase();
+  const subject = `PrintSafe: Update on print request #${shortId}`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin: 0; padding: 32px 16px; background-color: #F5F2EA; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #FBF9F3; border: 1px solid #DED7C6; border-radius: 24px; padding: 32px;">
+    <tr>
+      <td>
+        <h2 style="color: #14213D; font-size: 20px; font-weight: 800; margin: 0 0 12px 0;">
+          Print Request Declined
+        </h2>
+        <p style="color: #4A5568; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+          Unfortunately, <strong>${shopName}</strong> could not accept your print request #${shortId}.
+          ${reason ? `<br /><strong>Reason:</strong> ${reason}` : ""}
+        </p>
+        <p style="color: #4A5568; font-size: 13px; line-height: 1.5; margin: 0 0 20px 0;">
+          If you made an online pre-payment, an automatic full refund has been initiated back to your original payment method.
+        </p>
+        <p style="color: #718096; font-size: 12px; margin: 0;">
+          You can select another live print shop near you on the PrintSafe map.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+  return sendEmail({ to, subject, html });
+}

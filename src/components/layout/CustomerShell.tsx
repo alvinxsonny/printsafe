@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MapPin, FolderLock, History, User } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { cn } from "@/lib/utils";
 
 export interface CustomerShellProps {
@@ -65,12 +66,13 @@ export function CustomerShell({
             })}
           </nav>
 
-          {/* User Alias Pill & Theme Toggle */}
-          <div className="flex items-center gap-3">
+          {/* User Alias Pill, Notification Bell & Theme Toggle */}
+          <div className="flex items-center gap-2.5">
             <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-muted)]">
               <span className="w-2 h-2 rounded-full bg-[var(--accent-fill)]" />
               {userAlias}
             </span>
+            <NotificationBell targetHref="/app/notifications" />
             <ThemeToggle />
           </div>
         </div>

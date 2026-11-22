@@ -9,9 +9,11 @@ import {
   Settings,
   CreditCard,
   Store,
+  Bell,
 } from "lucide-react";
 import { Switch3D } from "@/components/ui/Switch3D";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { cn } from "@/lib/utils";
 
 export interface MerchantShellProps {
@@ -63,6 +65,7 @@ export function MerchantShell({
   const navItems = [
     { label: "Dashboard", href: "/merchant", icon: LayoutDashboard },
     { label: "Print Queue", href: "/merchant/queue", icon: Layers },
+    { label: "Notifications", href: "/merchant/notifications", icon: Bell },
     { label: "Shop Settings", href: "/merchant/settings", icon: Settings },
     { label: "Billing & Plans", href: "/merchant/billing", icon: CreditCard },
   ];
@@ -125,15 +128,18 @@ export function MerchantShell({
           </nav>
         </div>
 
-        {/* Footer with ThemeToggle */}
+        {/* Footer with ThemeToggle & NotificationBell */}
         <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between">
           <Link
             href="/"
             className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text)]"
           >
-            ← PrintSafe Home
+            ← Home
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <NotificationBell targetHref="/merchant/notifications" />
+            <ThemeToggle />
+          </div>
         </div>
       </aside>
 
@@ -153,6 +159,7 @@ export function MerchantShell({
               onCheckedChange={handleToggleLive}
               className="w-28 h-10 text-[10px]"
             />
+            <NotificationBell targetHref="/merchant/notifications" />
             <ThemeToggle />
           </div>
         </header>
