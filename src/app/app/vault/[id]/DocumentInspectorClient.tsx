@@ -16,6 +16,11 @@ import {
 } from "lucide-react";
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Card3D, Button3D, Badge, Switch3D, Input } from "@/components/ui";
+import {
+  fetchPdfBytes,
+  loadPdfDocument,
+  renderPageToCanvas,
+} from "@/lib/pdf/client-render";
 
 interface DocumentDetails {
   id: string;
@@ -423,6 +428,19 @@ export function DocumentInspectorClient({
   );
 }
 
+// Cache loaded PDF docs per documentId so multi-page view doesn't re-fetch
+const pdfDocCache = new Map<string, Promise<unknown>>();
+
+function getOrLoadPdfDoc(documentId: string) {
+  if (!pdfDocCache.has(documentId)) {
+    pdfDocCache.set(
+      documentId,
+      fetchPdfBytes(`/api/documents/${documentId}/pdf`).then(loadPdfDocument)
+    );
+  }
+  return pdfDocCache.get(documentId)!;
+}
+
 function DocumentPagePreview({
   documentId,
   pageNo,
@@ -445,34 +463,13 @@ function DocumentPagePreview({
       setIsLoading(true);
       setRenderError(null);
       try {
-        const res = await fetch(`/api/documents/${documentId}/pdf`);
-        if (!res.ok) throw new Error("Failed to fetch PDF from vault");
-        const pdfBytes = await res.arrayBuffer();
+        const pdfDoc = await getOrLoadPdfDoc(documentId);
         if (cancelled) return;
 
-        const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-        const loadingTask = pdfjsLib.getDocument({
-          data: new Uint8Array(pdfBytes),
-          useSystemFonts: true,
-          disableFontFace: false,
-        });
-        const pdf = await loadingTask.promise;
-        if (cancelled) return;
-
-        const page = await pdf.getPage(pageNo);
-        // 1.5x scale ≈ 108 DPI — crisp text, manageable size
-        const viewport = page.getViewport({ scale: 1.5 });
         const canvas = canvasRef.current;
         if (!canvas || cancelled) return;
 
-        canvas.width = Math.floor(viewport.width);
-        canvas.height = Math.floor(viewport.height);
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("Canvas context unavailable");
-
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+        await renderPageToCanvas(pdfDoc, pageNo, canvas, 1.5);
       } catch (err: unknown) {
         if (!cancelled) {
           setRenderError(

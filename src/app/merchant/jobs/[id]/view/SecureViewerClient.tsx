@@ -15,6 +15,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button3D, Badge, Modal } from "@/components/ui";
+import {
+  fetchPdfBytes,
+  loadPdfDocument,
+  renderPageToDataUrl,
+} from "@/lib/pdf/client-render";
 
 interface ViewerSession {
   id: string;
@@ -130,33 +135,20 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
   }, []);
 
   // 4. Load Pages — fetch raw PDF once, render each page client-side with PDF.js
-  const pdfDocRef = useRef<{ numPages: number; getPage: (n: number) => Promise<unknown> } | null>(null);
+  const pdfDocRef = useRef<unknown>(null);
   const pdfLoadingRef = useRef<Promise<void> | null>(null);
   const loadedPagesRef = useRef<Set<number>>(new Set());
   const inFlightPagesRef = useRef<Set<number>>(new Set());
 
-  async function ensurePdfLoaded(jobId: string): Promise<void> {
+  async function ensurePdfLoaded(jId: string): Promise<void> {
     if (pdfDocRef.current) return;
     if (pdfLoadingRef.current) {
       await pdfLoadingRef.current;
       return;
     }
     pdfLoadingRef.current = (async () => {
-      const pdfRes = await fetch(`/api/viewer/${jobId}/pdf`);
-      if (!pdfRes.ok) {
-        const errData = await pdfRes.json().catch(() => ({}));
-        throw new Error(
-          (errData as { error?: string }).error || `Failed to load PDF (HTTP ${pdfRes.status})`
-        );
-      }
-      const pdfArrayBuffer = await pdfRes.arrayBuffer();
-      const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-      const loadingTask = pdfjsLib.getDocument({
-        data: new Uint8Array(pdfArrayBuffer),
-        useSystemFonts: true,
-        disableFontFace: false,
-      });
-      pdfDocRef.current = (await loadingTask.promise) as unknown as typeof pdfDocRef.current;
+      const bytes = await fetchPdfBytes(`/api/viewer/${jId}/pdf`);
+      pdfDocRef.current = await loadPdfDocument(bytes);
     })();
     await pdfLoadingRef.current;
   }
@@ -173,26 +165,8 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
       });
 
       try {
-        // Load PDF once then render requested page via client-side PDF.js
         await ensurePdfLoaded(jobId);
-        const pdfDoc = pdfDocRef.current;
-        if (!pdfDoc) throw new Error("PDF document not loaded");
-
-        const page = await (pdfDoc as { getPage: (n: number) => Promise<unknown> }).getPage(p);
-        const scale = 2.0;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const viewport = (page as any).getViewport({ scale });
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.floor(viewport.width);
-        canvas.height = Math.floor(viewport.height);
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("Canvas context creation failed");
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (page as any).render({ canvasContext: ctx, viewport, canvas }).promise;
-
-        const dataUrl = canvas.toDataURL("image/webp", 0.92);
+        const dataUrl = await renderPageToDataUrl(pdfDocRef.current, p, 2.0);
         loadedPagesRef.current.add(p);
         setPageBlobs((prev) => ({ ...prev, [p]: dataUrl }));
       } catch (err: unknown) {

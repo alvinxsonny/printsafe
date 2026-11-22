@@ -19,6 +19,11 @@ import {
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Card3D, Button3D, Badge, Modal, Input } from "@/components/ui";
 import { openRazorpayCheckout } from "@/lib/payments/client";
+import {
+  fetchPdfBytes,
+  loadPdfDocument,
+  renderPageToDataUrl,
+} from "@/lib/pdf/client-render";
 
 interface VaultDocument {
   id: string;
@@ -73,7 +78,6 @@ export function VaultClient() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [currentTime, setCurrentTime] = useState<number | null>(null);
-  const [failedThumbnails, setFailedThumbnails] = useState<Record<string, boolean>>({});
 
   async function loadVault() {
     try {
@@ -603,31 +607,11 @@ export function VaultClient() {
                         href={`/app/vault/${doc.id}`}
                         className="block relative rounded-xl overflow-hidden bg-[var(--surface-2)] border border-[var(--border)] h-44 group cursor-pointer"
                       >
-                        {!failedThumbnails[doc.id] ? (
-                          /* eslint-disable-next-line @next/next/no-img-element */
-                          <img
-                            src={`/api/documents/${doc.id}/pages/1`}
-                            alt={doc.displayName}
-                            loading="lazy"
-                            onError={() =>
-                              setFailedThumbnails((prev) => ({
-                                ...prev,
-                                [doc.id]: true,
-                              }))
-                            }
-                            className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-200"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center gap-2 bg-[var(--surface-2)]">
-                            <FolderLock className="w-9 h-9 text-[var(--accent)]" />
-                            <span className="text-xs font-bold text-[var(--text)] truncate max-w-[150px]">
-                              {doc.displayName}
-                            </span>
-                            <span className="text-[10px] text-[var(--text-muted)] font-mono">
-                              {doc.pageCount ? `${doc.pageCount} pages` : "PDF"}
-                            </span>
-                          </div>
-                        )}
+                        <VaultDocumentThumbnail
+                          documentId={doc.id}
+                          displayName={doc.displayName}
+                          pageCount={doc.pageCount}
+                        />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5 backdrop-blur-[2px]">
                           <Eye className="w-4 h-4" />
                           View Pages & Presets
@@ -805,5 +789,70 @@ export function VaultClient() {
         </Modal>
       </div>
     </CustomerShell>
+  );
+}
+
+const thumbnailCache = new Map<string, string>();
+
+function VaultDocumentThumbnail({
+  documentId,
+  displayName,
+  pageCount,
+}: {
+  documentId: string;
+  displayName: string;
+  pageCount: number | null;
+}) {
+  const [dataUrl, setDataUrl] = useState<string | null>(
+    () => thumbnailCache.get(documentId) || null
+  );
+  const [hasError, setHasError] = useState(false);
+
+  const handleServerImageError = async () => {
+    try {
+      const bytes = await fetchPdfBytes(`/api/documents/${documentId}/pdf`);
+      const doc = await loadPdfDocument(bytes);
+      const url = await renderPageToDataUrl(doc, 1, 0.75);
+      thumbnailCache.set(documentId, url);
+      setDataUrl(url);
+    } catch {
+      setHasError(true);
+    }
+  };
+
+  if (hasError) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center gap-2 bg-[var(--surface-2)]">
+        <FolderLock className="w-9 h-9 text-[var(--accent)]" />
+        <span className="text-xs font-bold text-[var(--text)] truncate max-w-[150px]">
+          {displayName}
+        </span>
+        <span className="text-[10px] text-[var(--text-muted)] font-mono">
+          {pageCount ? `${pageCount} pages` : "PDF"}
+        </span>
+      </div>
+    );
+  }
+
+  if (dataUrl) {
+    return (
+      /* eslint-disable-next-line @next/next/no-img-element */
+      <img
+        src={dataUrl}
+        alt={displayName}
+        className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-200"
+      />
+    );
+  }
+
+  return (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src={`/api/documents/${documentId}/pages/1`}
+      alt={displayName}
+      loading="lazy"
+      onError={handleServerImageError}
+      className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-200"
+    />
   );
 }
