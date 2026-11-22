@@ -1,18 +1,29 @@
 "use client";
 
-import React from "react";
+import React, { useSyncExternalStore } from "react";
 import { useTheme } from "./ThemeProvider";
 import { Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const emptySubscribe = () => () => {};
+
 export function ThemeToggle({ className }: { className?: string }) {
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
   const { resolvedTheme, toggleTheme } = useTheme();
 
   return (
     <button
       onClick={toggleTheme}
       type="button"
-      aria-label={`Switch to ${resolvedTheme === "light" ? "dark" : "light"} theme`}
+      aria-label={
+        mounted
+          ? `Switch to ${resolvedTheme === "light" ? "dark" : "light"} theme`
+          : "Toggle theme"
+      }
       className={cn(
         "relative flex items-center justify-center w-10 h-10 rounded-2xl",
         "bg-[var(--surface)] text-[var(--text)] border border-[var(--border)]",
@@ -21,10 +32,14 @@ export function ThemeToggle({ className }: { className?: string }) {
         className
       )}
     >
-      {resolvedTheme === "dark" ? (
-        <Sun className="w-5 h-5 text-[var(--warm-fill)] transition-transform rotate-0 scale-100" />
+      {mounted ? (
+        resolvedTheme === "dark" ? (
+          <Sun className="w-5 h-5 text-[var(--warm-fill)] transition-transform rotate-0 scale-100" />
+        ) : (
+          <Moon className="w-5 h-5 text-[var(--info)] transition-transform rotate-0 scale-100" />
+        )
       ) : (
-        <Moon className="w-5 h-5 text-[var(--info)] transition-transform rotate-0 scale-100" />
+        <span className="w-5 h-5 inline-block" aria-hidden="true" />
       )}
     </button>
   );

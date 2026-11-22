@@ -40,7 +40,18 @@ function getSystemThemeServerSnapshot(): "light" | "dark" {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === "undefined") return "system";
-    return (localStorage.getItem("printsafe-theme") as Theme) || "system";
+    try {
+      const saved = localStorage.getItem("printsafe-theme") as Theme;
+      if (
+        saved &&
+        (saved === "light" || saved === "dark" || saved === "system")
+      ) {
+        return saved;
+      }
+    } catch {
+      // localStorage may not be accessible in restricted/private browsing modes
+    }
+    return "system";
   });
 
   const systemTheme = useSyncExternalStore(
