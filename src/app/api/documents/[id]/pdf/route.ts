@@ -71,6 +71,7 @@ export async function GET(
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `inline; filename="${encodeURIComponent(doc.displayName || "document")}.pdf"`,
+        "X-Frame-Options": "SAMEORIGIN",
         "Cache-Control": "private, no-cache, no-store, must-revalidate",
         Pragma: "no-cache",
         Expires: "0",

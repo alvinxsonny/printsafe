@@ -119,6 +119,7 @@ export async function GET(
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `inline; filename="job-${job.id.slice(0, 8)}.pdf"`,
+        "X-Frame-Options": "SAMEORIGIN",
         "Cache-Control": "no-store, no-cache, must-revalidate",
         Pragma: "no-cache",
         Expires: "0",

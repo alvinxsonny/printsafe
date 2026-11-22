@@ -12,18 +12,13 @@ import {
   AlertCircle,
   Loader2,
   HardDrive,
-  Eye,
   Sliders,
   Zap,
+  FileText,
 } from "lucide-react";
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Card3D, Button3D, Badge, Modal, Input } from "@/components/ui";
 import { openRazorpayCheckout } from "@/lib/payments/client";
-import {
-  fetchPdfBytes,
-  loadPdfDocument,
-  renderPageToDataUrl,
-} from "@/lib/pdf/client-render";
 
 interface VaultDocument {
   id: string;
@@ -584,7 +579,7 @@ export function VaultClient() {
               </div>
             </Card3D>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="space-y-3">
               {documents.map((doc) => {
                 const daysLeft = currentTime
                   ? Math.max(
@@ -596,37 +591,34 @@ export function VaultClient() {
                     )
                   : 30;
 
+                const sizeStr =
+                  doc.sizeBytes > 1024 * 1024
+                    ? `${(doc.sizeBytes / (1024 * 1024)).toFixed(1)} MB`
+                    : `${Math.round(doc.sizeBytes / 1024)} KB`;
+
                 return (
                   <Card3D
                     key={doc.id}
-                    className="p-4 flex flex-col justify-between space-y-4 border border-[var(--border)] hover:border-[var(--accent)]/50 transition-all"
+                    className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-[var(--border)] hover:border-[var(--accent)]/50 transition-all group"
                   >
-                    <div className="space-y-3">
-                      {/* Document Page 1 Thumbnail */}
+                    {/* Left: Icon & File Meta */}
+                    <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
                       <Link
                         href={`/app/vault/${doc.id}`}
-                        className="block relative rounded-xl overflow-hidden bg-[var(--surface-2)] border border-[var(--border)] h-44 group cursor-pointer"
+                        className="w-12 h-12 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] group-hover:border-[var(--accent)] flex items-center justify-center shrink-0 text-[var(--accent)] transition-colors"
                       >
-                        <VaultDocumentThumbnail
-                          documentId={doc.id}
-                          displayName={doc.displayName}
-                          pageCount={doc.pageCount}
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5 backdrop-blur-[2px]">
-                          <Eye className="w-4 h-4" />
-                          View Pages & Presets
-                        </div>
+                        <FileText className="w-6 h-6" />
                       </Link>
 
-                      {/* Document Info */}
-                      <div>
-                        <div className="flex items-start justify-between gap-2">
-                          <h3
-                            className="text-sm font-bold text-[var(--text)] truncate max-w-[200px]"
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/app/vault/${doc.id}`}
+                            className="text-sm font-extrabold text-[var(--text)] group-hover:text-[var(--accent)] transition-colors truncate"
                             title={doc.displayName}
                           >
                             {doc.displayName}
-                          </h3>
+                          </Link>
                           <button
                             onClick={() => {
                               setRenamingDoc(doc);
@@ -639,62 +631,60 @@ export function VaultClient() {
                           </button>
                         </div>
 
-                        <div className="flex items-center gap-2 mt-1 text-[11px] text-[var(--text-muted)] font-mono">
-                          <span>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-[var(--text-muted)] font-mono">
+                          <span className="font-semibold text-[var(--text)]">
                             {doc.pageCount
-                              ? `${doc.pageCount} pages`
+                              ? `${doc.pageCount} ${
+                                  doc.pageCount === 1 ? "page" : "pages"
+                                }`
                               : "1 page"}
                           </span>
                           <span>&bull;</span>
-                          <span>{(doc.sizeBytes / 1024).toFixed(0)} KB</span>
+                          <span>{sizeStr}</span>
+                          <span>&bull;</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-[var(--text-muted)]" />
+                            {doc.deleteAfterPrint ? (
+                              <span className="text-[var(--warm)] font-semibold">
+                                Deletes on print
+                              </span>
+                            ) : (
+                              <span>Expires in {daysLeft}d</span>
+                            )}
+                          </span>
                         </div>
-                      </div>
-
-                      {/* Expiry Pill */}
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-[var(--text-muted)] flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {doc.deleteAfterPrint ? (
-                            <span className="text-[var(--warm)] font-semibold">
-                              Deletes on print
-                            </span>
-                          ) : (
-                            <span>Expires in {daysLeft}d</span>
-                          )}
-                        </span>
-                        <Link
-                          href={`/app/vault/${doc.id}`}
-                          className="text-[var(--accent)] hover:underline font-bold flex items-center gap-1"
-                        >
-                          <Sliders className="w-3 h-3" />
-                          Presets
-                        </Link>
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between gap-2">
-                      <Button3D
-                        variant="secondary"
-                        size="sm"
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center pt-2 md:pt-0 border-t md:border-t-0 border-[var(--border)] w-full md:w-auto justify-end">
+                      <button
                         onClick={() => setDeletingDoc(doc)}
-                        className="text-[var(--danger)] hover:bg-[var(--danger-fill)]/10"
+                        className="p-2 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] text-[var(--danger)] hover:bg-[var(--danger-fill)]/15 hover:border-[var(--danger)]/40 transition-colors"
                         title="Delete from Vault"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button3D>
+                        <Trash2 className="w-4 h-4" />
+                      </button>
 
-                      <Link
-                        href={`/app/jobs/new?doc=${doc.id}`}
-                        className="flex-1"
-                      >
+                      <Link href={`/app/vault/${doc.id}`}>
+                        <Button3D
+                          variant="secondary"
+                          size="sm"
+                          className="flex items-center gap-1.5 text-xs font-bold"
+                        >
+                          <Sliders className="w-3.5 h-3.5 text-[var(--accent)]" />
+                          <span>View &amp; Presets</span>
+                        </Button3D>
+                      </Link>
+
+                      <Link href={`/app/jobs/new?doc=${doc.id}`}>
                         <Button3D
                           variant="primary"
                           size="sm"
-                          className="w-full flex items-center justify-center gap-1.5"
+                          className="flex items-center gap-1.5 text-xs font-bold"
                         >
                           <Printer className="w-3.5 h-3.5" />
-                          Print Job
+                          <span>Print Job</span>
                         </Button3D>
                       </Link>
                     </div>
@@ -789,70 +779,5 @@ export function VaultClient() {
         </Modal>
       </div>
     </CustomerShell>
-  );
-}
-
-const thumbnailCache = new Map<string, string>();
-
-function VaultDocumentThumbnail({
-  documentId,
-  displayName,
-  pageCount,
-}: {
-  documentId: string;
-  displayName: string;
-  pageCount: number | null;
-}) {
-  const [dataUrl, setDataUrl] = useState<string | null>(
-    () => thumbnailCache.get(documentId) || null
-  );
-  const [hasError, setHasError] = useState(false);
-
-  const handleServerImageError = async () => {
-    try {
-      const bytes = await fetchPdfBytes(`/api/documents/${documentId}/pdf`);
-      const doc = await loadPdfDocument(bytes);
-      const url = await renderPageToDataUrl(doc, 1, 0.75);
-      thumbnailCache.set(documentId, url);
-      setDataUrl(url);
-    } catch {
-      setHasError(true);
-    }
-  };
-
-  if (hasError) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center gap-2 bg-[var(--surface-2)]">
-        <FolderLock className="w-9 h-9 text-[var(--accent)]" />
-        <span className="text-xs font-bold text-[var(--text)] truncate max-w-[150px]">
-          {displayName}
-        </span>
-        <span className="text-[10px] text-[var(--text-muted)] font-mono">
-          {pageCount ? `${pageCount} pages` : "PDF"}
-        </span>
-      </div>
-    );
-  }
-
-  if (dataUrl) {
-    return (
-      /* eslint-disable-next-line @next/next/no-img-element */
-      <img
-        src={dataUrl}
-        alt={displayName}
-        className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-200"
-      />
-    );
-  }
-
-  return (
-    /* eslint-disable-next-line @next/next/no-img-element */
-    <img
-      src={`/api/documents/${documentId}/pages/1`}
-      alt={displayName}
-      loading="lazy"
-      onError={handleServerImageError}
-      className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-200"
-    />
   );
 }

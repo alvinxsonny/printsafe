@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -13,14 +13,12 @@ import {
   Clock,
   Loader2,
   AlertCircle,
+  ExternalLink,
+  Download,
+  FileText,
 } from "lucide-react";
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Card3D, Button3D, Badge, Switch3D, Input } from "@/components/ui";
-import {
-  fetchPdfBytes,
-  loadPdfDocument,
-  renderPageToCanvas,
-} from "@/lib/pdf/client-render";
 
 interface DocumentDetails {
   id: string;
@@ -174,14 +172,9 @@ export function DocumentInspectorClient({
     );
   }
 
-  const pagesArray = Array.from(
-    { length: doc.pageCount || 1 },
-    (_, i) => i + 1
-  );
-
   return (
     <CustomerShell userAlias="Document Viewer">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
           <Link
@@ -192,16 +185,28 @@ export function DocumentInspectorClient({
             Back to Document Vault
           </Link>
 
-          <Link href={`/app/jobs/new?doc=${doc.id}`}>
-            <Button3D
-              variant="primary"
-              size="sm"
-              className="flex items-center gap-1.5"
+          <div className="flex items-center gap-2">
+            <a
+              href={`/api/documents/${doc.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] text-xs font-bold text-[var(--text)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all"
             >
-              <Printer className="w-3.5 h-3.5" />
-              Print this Document
-            </Button3D>
-          </Link>
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Open in New Tab</span>
+            </a>
+
+            <Link href={`/app/jobs/new?doc=${doc.id}`}>
+              <Button3D
+                variant="primary"
+                size="sm"
+                className="flex items-center gap-1.5"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                Print this Document
+              </Button3D>
+            </Link>
+          </div>
         </div>
 
         {/* Document Title Header */}
@@ -235,37 +240,69 @@ export function DocumentInspectorClient({
           </div>
         )}
 
-        {/* Two Column Content: Left Previews, Right Presets */}
+        {/* Two Column Content: Left Built-in PDF Reader, Right Presets */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Page Previews */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-[var(--text)]">
-                Rendered Page Previews ({doc.pageCount})
-              </h2>
-              <span className="text-[11px] text-[var(--text-muted)]">
-                PDF.js Client Render &bull; Crisp Text
-              </span>
-            </div>
+          {/* Left: Built-in PDF Reader */}
+          <div className="lg:col-span-2 space-y-3">
+            <Card3D className="overflow-hidden border border-[var(--border)] p-0 bg-[var(--surface)]">
+              {/* Reader Header / Controls */}
+              <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--surface-2)] flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[var(--accent)]" />
+                  <span className="text-xs font-bold text-[var(--text)]">
+                    Built-in Document Viewer
+                  </span>
+                  <Badge variant="neutral" size="sm">
+                    {doc.pageCount} {doc.pageCount === 1 ? "page" : "pages"}
+                  </Badge>
+                </div>
 
-            <div className="space-y-4">
-              {pagesArray.map((pNum) => (
-                <Card3D key={pNum} className="p-3 bg-[var(--surface-2)]">
-                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-[var(--border)] text-xs font-semibold text-[var(--text-muted)]">
-                    <span>Page {pNum}</span>
-                    <Badge variant="neutral" size="sm">
-                      Owner View
-                    </Badge>
-                  </div>
-                  <div className="flex justify-center bg-white rounded-lg p-2 shadow-inner min-h-[300px] items-center">
-                    <DocumentPagePreview
-                      documentId={doc.id}
-                      pageNo={pNum}
-                    />
-                  </div>
-                </Card3D>
-              ))}
-            </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`/api/documents/${doc.id}/pdf`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] text-[var(--text)] transition-colors"
+                    title="Open PDF in new tab"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-[var(--accent)]" />
+                    <span className="hidden sm:inline">Pop Out</span>
+                  </a>
+
+                  <a
+                    href={`/api/documents/${doc.id}/pdf`}
+                    download={doc.displayName || "document.pdf"}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--accent)] text-[var(--text)] transition-colors"
+                    title="Download original document"
+                  >
+                    <Download className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                    <span className="hidden sm:inline">Download</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Native Built-in PDF Reader Iframe */}
+              <div className="relative w-full h-[720px] bg-zinc-950">
+                <iframe
+                  src={`/api/documents/${doc.id}/pdf#toolbar=1&navpanes=0`}
+                  title={doc.displayName}
+                  className="w-full h-full border-0 block"
+                />
+              </div>
+
+              {/* Reader Footer Info */}
+              <div className="px-4 py-2 border-t border-[var(--border)] bg-[var(--surface-2)]/60 text-[11px] text-[var(--text-muted)] flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span>Built-in Browser PDF Reader &bull; Full Vector Fidelity</span>
+                <a
+                  href={`/api/documents/${doc.id}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--accent)] hover:underline font-semibold"
+                >
+                  Trouble viewing? Click to open directly
+                </a>
+              </div>
+            </Card3D>
           </div>
 
           {/* Right: Print Presets & Retention Settings */}
@@ -425,90 +462,5 @@ export function DocumentInspectorClient({
         </div>
       </div>
     </CustomerShell>
-  );
-}
-
-// Cache loaded PDF docs per documentId so multi-page view doesn't re-fetch
-const pdfDocCache = new Map<string, Promise<unknown>>();
-
-function getOrLoadPdfDoc(documentId: string) {
-  if (!pdfDocCache.has(documentId)) {
-    pdfDocCache.set(
-      documentId,
-      fetchPdfBytes(`/api/documents/${documentId}/pdf`).then(loadPdfDocument)
-    );
-  }
-  return pdfDocCache.get(documentId)!;
-}
-
-function DocumentPagePreview({
-  documentId,
-  pageNo,
-}: {
-  documentId: string;
-  pageNo: number;
-}) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [renderError, setRenderError] = useState<string | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const hasRendered = useRef(false);
-
-  useEffect(() => {
-    if (hasRendered.current) return;
-    hasRendered.current = true;
-
-    let cancelled = false;
-
-    async function renderPage() {
-      setIsLoading(true);
-      setRenderError(null);
-      try {
-        const pdfDoc = await getOrLoadPdfDoc(documentId);
-        if (cancelled) return;
-
-        const canvas = canvasRef.current;
-        if (!canvas || cancelled) return;
-
-        await renderPageToCanvas(pdfDoc, pageNo, canvas, 1.5);
-      } catch (err: unknown) {
-        if (!cancelled) {
-          setRenderError(
-            err instanceof Error ? err.message : "Failed to render page"
-          );
-        }
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-
-    void renderPage();
-    return () => {
-      cancelled = true;
-    };
-  }, [documentId, pageNo]);
-
-  if (isLoading) {
-    return (
-      <div className="h-64 flex flex-col items-center justify-center gap-2 text-[var(--text-muted)]">
-        <Loader2 className="w-6 h-6 animate-spin text-[var(--accent)]" />
-        <span className="text-xs">Rendering page {pageNo}...</span>
-      </div>
-    );
-  }
-
-  if (renderError) {
-    return (
-      <div className="h-64 flex flex-col items-center justify-center gap-2 text-[var(--danger)] text-center p-4">
-        <AlertCircle className="w-6 h-6" />
-        <span className="text-xs">{renderError}</span>
-      </div>
-    );
-  }
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="max-h-[600px] w-auto object-contain rounded shadow-sm border border-neutral-200"
-    />
   );
 }

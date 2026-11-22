@@ -7,12 +7,12 @@ const cspDirectives = [
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://api.razorpay.com https://*.r2.cloudflarestorage.com",
   "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://nominatim.openstreetmap.org https://overpass-api.de https://*.r2.cloudflarestorage.com",
-  "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
+  "frame-src 'self' blob: data: https://api.razorpay.com https://checkout.razorpay.com",
   "worker-src 'self' blob:",
-  "object-src 'none'",
+  "object-src 'self' blob:",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  "frame-ancestors 'self'",
   "upgrade-insecure-requests",
 ];
 
@@ -53,7 +53,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "X-Frame-Options",
-            value: "DENY",
+            value: "SAMEORIGIN",
           },
           {
             key: "Referrer-Policy",
