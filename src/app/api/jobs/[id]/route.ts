@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getServerSession } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
-import { printJobs, shops, documents } from "@/lib/db/schema";
+import { printJobs, shops, documents, customerProfiles } from "@/lib/db/schema";
 import { decryptPasscode } from "@/lib/jobs/passcode";
 import { isJobExpired } from "@/lib/jobs/machine";
 
@@ -89,15 +89,31 @@ export async function GET(
 
     // Handover Passcode visibility
     let passcode: string | null = null;
-    if (
-      isCustomerOwner &&
-      jobRow.codeEnc &&
-      (currentStatus === "accepted" || currentStatus === "unlocked")
-    ) {
+    let customerFootprint: { sheetsPrintedTotal: number } | null = null;
+    if (isCustomerOwner) {
+      if (
+        jobRow.codeEnc &&
+        (currentStatus === "accepted" || currentStatus === "unlocked")
+      ) {
+        try {
+          passcode = decryptPasscode(jobRow.codeEnc);
+        } catch {
+          passcode = null;
+        }
+      }
+
+      // Fetch customer paper footprint
       try {
-        passcode = decryptPasscode(jobRow.codeEnc);
+        const [profile] = await db
+          .select({ sheetsPrintedTotal: customerProfiles.sheetsPrintedTotal })
+          .from(customerProfiles)
+          .where(eq(customerProfiles.userId, session.user.id))
+          .limit(1);
+        customerFootprint = {
+          sheetsPrintedTotal: profile?.sheetsPrintedTotal ?? 0,
+        };
       } catch {
-        passcode = null;
+        customerFootprint = { sheetsPrintedTotal: 0 };
       }
     }
 
@@ -135,6 +151,7 @@ export async function GET(
             name: jobRow.documentName,
             pageCount: jobRow.documentPageCount,
           },
+          customerFootprint,
         },
       },
       {

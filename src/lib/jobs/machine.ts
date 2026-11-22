@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import {
   printJobs,
@@ -8,6 +8,7 @@ import {
   documents,
   shops,
   users,
+  customerProfiles,
 } from "@/lib/db/schema";
 import {
   PASSCODE_TTL_MINUTES,
@@ -313,6 +314,35 @@ export async function transitionJob(params: {
 
   // 3. Persist Job Updates
   await db.update(printJobs).set(updates).where(eq(printJobs.id, jobId));
+
+  // 3b. Update Customer Paper Footprint on Job Completion (Phase 14 Task 3)
+  if (newStatus === "completed" && job.sheets > 0) {
+    try {
+      const [profile] = await db
+        .select({ id: customerProfiles.id })
+        .from(customerProfiles)
+        .where(eq(customerProfiles.userId, job.customerId))
+        .limit(1);
+
+      if (profile) {
+        await db
+          .update(customerProfiles)
+          .set({
+            sheetsPrintedTotal: sql`${customerProfiles.sheetsPrintedTotal} + ${job.sheets}`,
+          })
+          .where(eq(customerProfiles.id, profile.id));
+      } else {
+        await db.insert(customerProfiles).values({
+          id: `cp_${crypto.randomUUID()}`,
+          userId: job.customerId,
+          planId: "free",
+          sheetsPrintedTotal: job.sheets,
+        });
+      }
+    } catch (footprintErr) {
+      console.error("Failed to update customer footprint:", footprintErr);
+    }
+  }
 
   // 4. Audit Log
   await db.insert(auditLogs).values({

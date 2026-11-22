@@ -23,11 +23,14 @@ import {
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Card3D, Button3D, Badge, Modal } from "@/components/ui";
 import { ShopMap } from "@/components/map";
+import { FootprintTreeCard, FootprintTree } from "@/components/tree";
 import type { NearbyShopDetail } from "@/lib/db/queries";
 import type { PlaceSearchResult } from "@/lib/geo/search";
 
 interface CustomerHomeClientProps {
   userAlias?: string;
+  initialSheetsPrintedTotal?: number;
+  initialHasNoPrintsLast30Days?: boolean;
 }
 
 const DEFAULT_CENTER = { lat: 12.9716, lng: 77.5946 }; // Bangalore default
@@ -53,7 +56,18 @@ function getInitialLocation(): {
 
 export function CustomerHomeClient({
   userAlias = "Customer A7F2",
+  initialSheetsPrintedTotal = 0,
+  initialHasNoPrintsLast30Days = false,
 }: CustomerHomeClientProps) {
+  // Footprint Tree states (Phase 14)
+  const [sheetsPrintedTotal, setSheetsPrintedTotal] = useState(
+    initialSheetsPrintedTotal
+  );
+  const [hasNoPrintsLast30Days, setHasNoPrintsLast30Days] = useState(
+    initialHasNoPrintsLast30Days
+  );
+  const [showTreeModal, setShowTreeModal] = useState(false);
+
   // Location states
   const [userLocation, setUserLocation] = useState(getInitialLocation);
   const [showLocationModal, setShowLocationModal] = useState(
@@ -82,6 +96,31 @@ export function CustomerHomeClient({
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
   const [notifySubscribed, setNotifySubscribed] = useState(false);
+
+  // Live Footprint Refresh (Phase 14)
+  useEffect(() => {
+    let ignore = false;
+    async function loadFootprint() {
+      try {
+        const res = await fetch("/api/customer/footprint");
+        if (res.ok) {
+          const data = await res.json();
+          if (!ignore) {
+            if (typeof data.sheetsPrintedTotal === "number") {
+              setSheetsPrintedTotal(data.sheetsPrintedTotal);
+            }
+            if (typeof data.hasNoPrintsLast30Days === "boolean") {
+              setHasNoPrintsLast30Days(data.hasNoPrintsLast30Days);
+            }
+          }
+        }
+      } catch {}
+    }
+    loadFootprint();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // 1. Reactive Fetch on Location / Radius / IncludeClosed changes
   useEffect(() => {
@@ -392,6 +431,18 @@ export function CustomerHomeClient({
                 <span className="hidden md:inline">List</span>
               </button>
             </div>
+
+            {/* Paper Footprint Button (Phase 14) */}
+            <Button3D
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTreeModal(true)}
+              className="flex items-center gap-1.5 text-xs font-bold shrink-0"
+              title="View Paper Footprint Tree"
+            >
+              <span className="text-sm">🌳</span>
+              <span className="hidden sm:inline">Footprint</span>
+            </Button3D>
           </div>
         </div>
 
@@ -399,6 +450,27 @@ export function CustomerHomeClient({
         <div className="relative flex-1 flex overflow-hidden">
           {/* Desktop Left Side Panel (List & Details) */}
           <div className="hidden lg:flex flex-col w-[400px] border-r border-[var(--border)] bg-[var(--surface)] overflow-hidden shrink-0 z-10">
+            {/* Paper Footprint Summary Banner in Sidebar */}
+            <div className="p-3 border-b border-[var(--border)] bg-[var(--surface-2)]/60 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🌳</span>
+                <div>
+                  <p className="text-xs font-bold text-[var(--text)]">
+                    {sheetsPrintedTotal}{" "}
+                    {sheetsPrintedTotal === 1 ? "sheet" : "sheets"} printed
+                  </p>
+                  <p className="text-[10px] text-[var(--text-muted)]">
+                    Paper footprint tree
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTreeModal(true)}
+                className="text-[11px] text-[var(--accent)] font-bold hover:underline"
+              >
+                View Tree &rarr;
+              </button>
+            </div>
             <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-extrabold text-[var(--text)]">
@@ -612,6 +684,12 @@ export function CustomerHomeClient({
                     Accessible List
                   </Badge>
                 </div>
+
+                {/* Paper Footprint Card (Phase 14) */}
+                <FootprintTreeCard
+                  sheetsPrintedTotal={sheetsPrintedTotal}
+                  hasNoPrintsLast30Days={hasNoPrintsLast30Days}
+                />
 
                 {shops.length === 0 ? (
                   <Card3D className="p-8 text-center space-y-3">
@@ -856,6 +934,21 @@ export function CustomerHomeClient({
                 Continue with Default Area
               </Button3D>
             </div>
+          </div>
+        </Modal>
+
+        {/* Paper Footprint Tree Modal (Phase 14) */}
+        <Modal
+          isOpen={showTreeModal}
+          onClose={() => setShowTreeModal(false)}
+          title="Paper Footprint Tree"
+          className="max-w-md"
+        >
+          <div className="p-2">
+            <FootprintTree
+              sheetsPrintedTotal={sheetsPrintedTotal}
+              hasNoPrintsLast30Days={hasNoPrintsLast30Days}
+            />
           </div>
         </Modal>
       </div>

@@ -21,6 +21,7 @@ import {
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Card3D, Button3D, Badge, Modal } from "@/components/ui";
 import { openRazorpayCheckout } from "@/lib/payments/client";
+import { FootprintTreeCard } from "@/components/tree";
 
 interface JobDetail {
   id: string;
@@ -71,6 +72,9 @@ interface JobDetail {
     name: string;
     pageCount: number;
   };
+  customerFootprint?: {
+    sheetsPrintedTotal: number;
+  } | null;
 }
 
 export function JobTrackerClient({ jobId }: { jobId: string }) {
@@ -680,6 +684,15 @@ export function JobTrackerClient({ jobId }: { jobId: string }) {
               <span>Print Receipt</span>
             </Button3D>
           </Card3D>
+        )}
+
+        {/* Paper Footprint Impact Tree on Job Completion (Phase 14 Task 3) */}
+        {job.status === "completed" && (
+          <FootprintTreeCard
+            sheetsPrintedTotal={
+              job.customerFootprint?.sheetsPrintedTotal ?? job.sheets
+            }
+          />
         )}
 
         {/* Order Details & Shop Details Grid */}

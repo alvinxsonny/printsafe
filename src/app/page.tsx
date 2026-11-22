@@ -21,6 +21,7 @@ import {
   ThemeToggle,
   PaperStackIllustration,
 } from "@/components/ui";
+import { FootprintTree } from "@/components/tree";
 
 export default function LandingPage() {
   return (
@@ -359,6 +360,49 @@ export default function LandingPage() {
                 vault for N days. Hard delete permanently destroys keys and
                 blobs.
               </p>
+            </Card3D>
+          </div>
+        </div>
+      </section>
+
+      {/* Creative Feature: Paper Footprint Tree (Phase 14) */}
+      <section
+        id="footprint"
+        className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          <div className="lg:col-span-7 space-y-4 text-center lg:text-left">
+            <Badge variant="live" size="md">
+              Creative Feature &bull; Eco Impact
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[var(--text)]">
+              The Paper Footprint Tree
+            </h2>
+            <p className="text-base sm:text-lg text-[var(--text-muted)] leading-relaxed">
+              Every printed sheet has an ecological footprint. PrintSafe
+              includes a playful, isometric 3D tree that visualizes your paper
+              usage scale: each 10 sheets printed removes one canopy tier. If
+              you harvest 5 tiers, the tree becomes a stump with logs while a
+              new sapling sprouts beside it.
+            </p>
+            <div className="p-4 rounded-2xl bg-[var(--surface-2)] border border-[var(--border)] text-xs text-[var(--text-muted)] space-y-1">
+              <p className="font-bold text-[var(--text)]">
+                Transparent &amp; honest metrics:
+              </p>
+              <p>
+                We calculate real forest impact using an approximate conversion
+                of 8,333 sheets per tree, encouraging digital PDF sharing
+                whenever possible.
+              </p>
+            </div>
+          </div>
+
+          <div className="lg:col-span-5 flex justify-center">
+            <Card3D className="p-6 bg-[var(--surface)] max-w-sm w-full">
+              <FootprintTree
+                sheetsPrintedTotal={14}
+                hasNoPrintsLast30Days={false}
+              />
             </Card3D>
           </div>
         </div>
