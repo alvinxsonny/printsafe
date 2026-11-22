@@ -45,7 +45,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${googleSansFlex.variable} ${dmMono.variable}`}
+      className={`${googleSansFlex.variable} ${dmMono.variable} dark`}
     >
       <body className="antialiased min-h-screen">
         <ThemeProvider>{children}</ThemeProvider>

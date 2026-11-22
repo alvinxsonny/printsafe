@@ -15,6 +15,10 @@
     monospace;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 @layer base {
   :root {
     /* Crisp tactile paper light theme */
@@ -23,9 +27,9 @@
     --surface-2: #ece8df;
     --text: #09090b;
     --text-muted: #52525b;
-    --accent: #0f766e;
-    --accent-fill: #10b981;
-    --accent-fill-darker: #059669;
+    --accent: #137a4b;
+    --accent-fill: #22c55e;
+    --accent-fill-darker: #15803d;
     --warm: #b45309;
     --warm-fill: #f59e0b;
     --info: #1d4ed8;
@@ -82,7 +86,7 @@ body {
     sans-serif;
   background-image: url("/paper-grain.png");
   background-repeat: repeat;
-  background-size: 180px 180px;
+  background-size: 150px 150px;
   position: relative;
   min-height: 100vh;
   transition:
@@ -100,15 +104,17 @@ body::before {
   z-index: 9999;
   background-image: url("/paper-grain.png");
   background-repeat: repeat;
-  background-size: 160px 160px;
-  opacity: 0.12;
+  background-size: 140px 140px;
+  opacity: 0.36;
   mix-blend-mode: multiply;
+  filter: contrast(140%);
 }
 
 .dark body::before,
 html.dark body::before {
-  opacity: 0.1;
+  opacity: 0.28;
   mix-blend-mode: screen;
+  filter: contrast(150%) brightness(110%);
 }
 
 h1,

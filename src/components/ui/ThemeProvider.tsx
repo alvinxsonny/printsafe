@@ -34,12 +34,12 @@ function getSystemThemeSnapshot(): "light" | "dark" {
 }
 
 function getSystemThemeServerSnapshot(): "light" | "dark" {
-  return "light";
+  return "dark";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "light";
+    if (typeof window === "undefined") return "dark";
     try {
       const saved = localStorage.getItem("printsafe-theme") as Theme;
       if (
@@ -51,7 +51,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // localStorage may not be accessible in restricted/private browsing modes
     }
-    return "light";
+    return "dark";
   });
 
   const systemTheme = useSyncExternalStore(

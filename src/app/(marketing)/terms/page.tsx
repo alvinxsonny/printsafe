@@ -49,7 +49,7 @@ export default function TermsOfServicePage() {
           {/* 1. Purpose & Service Scope */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <FileText className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <FileText className="w-5 h-5 text-[var(--accent)]" />
               1. Scope of the Platform
             </h2>
             <p>
@@ -96,7 +96,7 @@ export default function TermsOfServicePage() {
           {/* 3. Merchant Operating Standards */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <Store className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <Store className="w-5 h-5 text-[var(--accent)]" />
               3. Merchant Operating Standards
             </h2>
             <p>
@@ -124,7 +124,7 @@ export default function TermsOfServicePage() {
           {/* 4. Payments, Pricing & Automatic Refunds */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <CreditCard className="w-5 h-5 text-[var(--accent)]" />
               4. Pricing, Payments, and Automatic Refunds
             </h2>
             <p>
@@ -153,7 +153,7 @@ export default function TermsOfServicePage() {
           {/* 5. Viewing Window & Ephemeral Access */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <Clock className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <Clock className="w-5 h-5 text-[var(--accent)]" />
               5. Ephemeral Viewing Windows &amp; Retention
             </h2>
             <p>
@@ -168,7 +168,7 @@ export default function TermsOfServicePage() {
           {/* 6. Honest Technical Limits */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <Scale className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <Scale className="w-5 h-5 text-[var(--accent)]" />
               6. Limitation of Technical Liability
             </h2>
             <p>
@@ -186,7 +186,7 @@ export default function TermsOfServicePage() {
           {/* 7. Governing Law */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <Scale className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <Scale className="w-5 h-5 text-[var(--accent)]" />
               7. Governing Law &amp; Jurisdiction
             </h2>
             <p>

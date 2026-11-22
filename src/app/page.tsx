@@ -92,7 +92,7 @@ export default function LandingPage() {
 
             <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-[var(--text)] leading-[1.1]">
               Print anywhere. <br />
-              <span className="text-[#12724A] dark:text-[var(--accent)] underline decoration-wavy decoration-[#3DD68C]/50">
+              <span className="text-[var(--accent)] underline decoration-wavy decoration-[var(--accent)]/50">
                 Share nothing.
               </span>
             </h1>
@@ -129,15 +129,15 @@ export default function LandingPage() {
             {/* Trust highlights */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 pt-4 text-xs font-semibold text-[var(--text-muted)]">
               <span className="flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4 text-[#12724A] dark:text-[var(--accent)]" />{" "}
-                No file downloads
+                <CheckCircle className="w-4 h-4 text-[var(--accent)]" /> No file
+                downloads
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4 text-[#12724A] dark:text-[var(--accent)]" />{" "}
+                <CheckCircle className="w-4 h-4 text-[var(--accent)]" />{" "}
                 Anonymous aliases
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4 text-[#12724A] dark:text-[var(--accent)]" />{" "}
+                <CheckCircle className="w-4 h-4 text-[var(--accent)]" />{" "}
                 Auto-expiring access
               </span>
             </div>
@@ -173,7 +173,7 @@ export default function LandingPage() {
       {/* The Problem Section */}
       <section
         id="problem"
-        className="py-20 px-4 sm:px-6 lg:px-8 bg-[var(--surface)] border-y border-[var(--border)]"
+        className="scroll-mt-28 py-24 px-4 sm:px-6 lg:px-8 bg-[var(--surface)] border-y border-[var(--border)]"
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -238,7 +238,7 @@ export default function LandingPage() {
       {/* How It Works (3 Steps) */}
       <section
         id="how-it-works"
-        className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
+        className="scroll-mt-28 py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
       >
         <div className="text-center max-w-3xl mx-auto mb-16">
           <Badge variant="info" size="md">
@@ -252,55 +252,61 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="flex flex-col items-center text-center p-6 rounded-[28px] bg-[var(--surface)] border border-[var(--border)] extrude-md">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-fill)] border border-[var(--accent-fill-darker)] flex items-center justify-center font-black text-xl text-zinc-950 extrude-sm mb-6">
+        <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full">
+          <Card3D className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left p-6 sm:p-8 gap-6 bg-[var(--surface)] border border-[var(--border)] extrude-md">
+            <div className="w-14 h-14 shrink-0 rounded-md bg-[var(--accent-fill)] border border-[var(--accent-fill-darker)] flex items-center justify-center font-black text-xl text-zinc-950 extrude-sm">
               1
             </div>
-            <h3 className="text-xl font-bold text-[var(--text)]">
-              Upload to Vault
-            </h3>
-            <p className="text-sm text-[var(--text-muted)] mt-2 leading-relaxed">
-              Drop your PDF or image into your private vault. Files are
-              encrypted with per-document AES-256 keys before they ever touch
-              cloud storage.
-            </p>
-          </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-[var(--text)]">
+                Upload to Vault
+              </h3>
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                Drop your PDF or image into your private vault. Files are
+                encrypted with per-document AES-256 keys before they ever touch
+                cloud storage.
+              </p>
+            </div>
+          </Card3D>
 
-          <div className="flex flex-col items-center text-center p-6 rounded-[28px] bg-[var(--surface)] border border-[var(--border)] extrude-md">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-fill)] border border-[var(--accent-fill-darker)] flex items-center justify-center font-black text-xl text-zinc-950 extrude-sm mb-6">
+          <Card3D className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left p-6 sm:p-8 gap-6 bg-[var(--surface)] border border-[var(--border)] extrude-md">
+            <div className="w-14 h-14 shrink-0 rounded-md bg-[var(--accent-fill)] border border-[var(--accent-fill-darker)] flex items-center justify-center font-black text-xl text-zinc-950 extrude-sm">
               2
             </div>
-            <h3 className="text-xl font-bold text-[var(--text)]">
-              Pick a Live Shop
-            </h3>
-            <p className="text-sm text-[var(--text-muted)] mt-2 leading-relaxed">
-              Find verified shops currently online near you on our real-time
-              map. Confirm your settings (pages, color, duplex) and see the
-              exact price upfront.
-            </p>
-          </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-[var(--text)]">
+                Pick a Live Shop
+              </h3>
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                Find verified shops currently online near you on our real-time
+                map. Confirm your settings (pages, color, duplex) and see the
+                exact price upfront.
+              </p>
+            </div>
+          </Card3D>
 
-          <div className="flex flex-col items-center text-center p-6 rounded-[28px] bg-[var(--surface)] border border-[var(--border)] extrude-md">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-fill)] border border-[var(--accent-fill-darker)] flex items-center justify-center font-black text-xl text-zinc-950 extrude-sm mb-6">
+          <Card3D className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left p-6 sm:p-8 gap-6 bg-[var(--surface)] border border-[var(--border)] extrude-md">
+            <div className="w-14 h-14 shrink-0 rounded-md bg-[var(--accent-fill)] border border-[var(--accent-fill-darker)] flex items-center justify-center font-black text-xl text-zinc-950 extrude-sm">
               3
             </div>
-            <h3 className="text-xl font-bold text-[var(--text)]">
-              Show Code & Print
-            </h3>
-            <p className="text-sm text-[var(--text-muted)] mt-2 leading-relaxed">
-              Show your 4-digit handover code at the counter. The merchant
-              unlocks a secure, watermarked viewer for printing. As soon as it
-              prints, access vanishes.
-            </p>
-          </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-[var(--text)]">
+                Show Code &amp; Print
+              </h3>
+              <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+                Show your 4-digit handover code at the counter. The merchant
+                unlocks a secure, watermarked viewer for printing. As soon as it
+                prints, access vanishes.
+              </p>
+            </div>
+          </Card3D>
         </div>
       </section>
 
       {/* Privacy Guarantees */}
       <section
         id="privacy"
-        className="py-20 px-4 sm:px-6 lg:px-8 bg-[var(--surface)] border-y border-[var(--border)]"
+        className="scroll-mt-28 py-24 px-4 sm:px-6 lg:px-8 bg-[var(--surface)] border-y border-[var(--border)]"
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -318,7 +324,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card3D className="flex flex-col gap-2">
-              <ShieldCheck className="w-8 h-8 text-[#12724A] dark:text-[var(--accent)] mb-2" />
+              <ShieldCheck className="w-8 h-8 text-[var(--accent)] mb-2" />
               <h4 className="text-base font-bold text-[var(--text)]">
                 No Downloads
               </h4>
@@ -329,7 +335,7 @@ export default function LandingPage() {
             </Card3D>
 
             <Card3D className="flex flex-col gap-2">
-              <EyeOff className="w-8 h-8 text-[#12724A] dark:text-[var(--accent)] mb-2" />
+              <EyeOff className="w-8 h-8 text-[var(--accent)] mb-2" />
               <h4 className="text-base font-bold text-[var(--text)]">
                 Anonymous Aliases
               </h4>
@@ -340,7 +346,7 @@ export default function LandingPage() {
             </Card3D>
 
             <Card3D className="flex flex-col gap-2">
-              <Clock className="w-8 h-8 text-[#12724A] dark:text-[var(--accent)] mb-2" />
+              <Clock className="w-8 h-8 text-[var(--accent)] mb-2" />
               <h4 className="text-base font-bold text-[var(--text)]">
                 Time-Bounded Access
               </h4>
@@ -351,7 +357,7 @@ export default function LandingPage() {
             </Card3D>
 
             <Card3D className="flex flex-col gap-2">
-              <Trash2 className="w-8 h-8 text-[#12724A] dark:text-[var(--accent)] mb-2" />
+              <Trash2 className="w-8 h-8 text-[var(--accent)] mb-2" />
               <h4 className="text-base font-bold text-[var(--text)]">
                 User-Controlled Retention
               </h4>
@@ -368,7 +374,7 @@ export default function LandingPage() {
       {/* Creative Feature: Paper Footprint Tree (Phase 14) */}
       <section
         id="footprint"
-        className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
+        className="scroll-mt-28 py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-7 space-y-4 text-center lg:text-left">
@@ -411,7 +417,7 @@ export default function LandingPage() {
       {/* MVP Plans & Pricing */}
       <section
         id="plans"
-        className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
+        className="scroll-mt-28 py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
       >
         <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
           <Badge variant="live" size="md">
@@ -732,7 +738,7 @@ export default function LandingPage() {
       </section>
 
       {/* Bottom CTA Banner */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="rounded-[32px] bg-[var(--surface)] border border-[var(--border)] extrude-lg p-8 sm:p-14 text-center flex flex-col items-center gap-6">
           <Badge variant="live" size="md">
             Ready to print safely?
@@ -768,12 +774,22 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-[var(--border)] bg-[var(--surface)] py-12 px-4 sm:px-6 lg:px-8">
+      <footer className="mt-auto border-t border-[var(--border)] bg-[var(--surface)] py-14 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-sm text-[var(--text-muted)]">
-          <div className="flex items-center gap-2.5">
-            <Logo size={24} showText={false} />
-            <span className="font-bold text-[var(--text)]">PrintSafe</span>
-            <span>— Print anywhere. Share nothing.</span>
+          <div className="flex items-center gap-3.5">
+            <Logo size={40} showText={false} />
+            <div className="flex flex-col">
+              <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-[var(--text)] leading-tight">
+                Print<span className="text-[var(--accent)]">Safe</span>
+              </span>
+              <span className="text-xs text-[var(--text-muted)] font-medium">
+                Print anywhere. Share nothing.
+              </span>
+              <span className="text-xs text-[var(--text-muted)] pt-1">
+                Made by{" "}
+                <span className="font-bold text-[var(--text)]">Alvin</span>
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-6 text-xs font-semibold">
@@ -790,7 +806,7 @@ export default function LandingPage() {
               Terms of Service
             </Link>
             <Link
-              href="/how-it-works"
+              href="/#how-it-works"
               className="hover:text-[var(--text)] transition-colors"
             >
               How It Works

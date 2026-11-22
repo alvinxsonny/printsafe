@@ -50,7 +50,7 @@ export default function PrivacyNoticePage() {
           {/* Section 1: Zero-Trust Overview */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <ShieldCheck className="w-5 h-5 text-[var(--accent)]" />
               1. Zero-Trust Document Architecture
             </h2>
             <p>
@@ -66,7 +66,7 @@ export default function PrivacyNoticePage() {
           {/* Section 2: What is Collected and Why */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <FileText className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <FileText className="w-5 h-5 text-[var(--accent)]" />
               2. What We Collect and Why
             </h2>
             <div className="space-y-2">
@@ -112,7 +112,7 @@ export default function PrivacyNoticePage() {
           {/* Section 3: Who Can See What */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <EyeOff className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <EyeOff className="w-5 h-5 text-[var(--accent)]" />
               3. Who Can See What (Strict Role Isolation)
             </h2>
             <div className="overflow-x-auto">
@@ -171,7 +171,7 @@ export default function PrivacyNoticePage() {
           {/* Section 4: Honest Limits */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <Lock className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <Lock className="w-5 h-5 text-[var(--accent)]" />
               4. Honest Limits of Screenshot and Save-as-PDF Protection
             </h2>
             <p>
@@ -201,7 +201,7 @@ export default function PrivacyNoticePage() {
           {/* Section 5: Data Region */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <Server className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <Server className="w-5 h-5 text-[var(--accent)]" />
               5. Data Region &amp; Sovereignty
             </h2>
             <p>
@@ -215,7 +215,7 @@ export default function PrivacyNoticePage() {
           {/* Section 6: Data Retention & Automated Sweeps */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <Trash2 className="w-5 h-5 text-[var(--accent)]" />
               6. Data Retention &amp; Automated Sweeps
             </h2>
             <p>Customer files do not linger on PrintSafe indefinitely:</p>
@@ -241,7 +241,7 @@ export default function PrivacyNoticePage() {
           {/* Section 7: User Rights */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
-              <UserCheck className="w-5 h-5 text-[#12724A] dark:text-[var(--accent)]" />
+              <UserCheck className="w-5 h-5 text-[var(--accent)]" />
               7. How to Exercise Your Rights
             </h2>
             <p>
