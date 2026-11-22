@@ -129,9 +129,37 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // 4. Load Pages
+  // 4. Load Pages — fetch raw PDF once, render each page client-side with PDF.js
+  const pdfDocRef = useRef<{ numPages: number; getPage: (n: number) => Promise<unknown> } | null>(null);
+  const pdfLoadingRef = useRef<Promise<void> | null>(null);
   const loadedPagesRef = useRef<Set<number>>(new Set());
   const inFlightPagesRef = useRef<Set<number>>(new Set());
+
+  async function ensurePdfLoaded(jobId: string): Promise<void> {
+    if (pdfDocRef.current) return;
+    if (pdfLoadingRef.current) {
+      await pdfLoadingRef.current;
+      return;
+    }
+    pdfLoadingRef.current = (async () => {
+      const pdfRes = await fetch(`/api/viewer/${jobId}/pdf`);
+      if (!pdfRes.ok) {
+        const errData = await pdfRes.json().catch(() => ({}));
+        throw new Error(
+          (errData as { error?: string }).error || `Failed to load PDF (HTTP ${pdfRes.status})`
+        );
+      }
+      const pdfArrayBuffer = await pdfRes.arrayBuffer();
+      const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+      const loadingTask = pdfjsLib.getDocument({
+        data: new Uint8Array(pdfArrayBuffer),
+        useSystemFonts: true,
+        disableFontFace: false,
+      });
+      pdfDocRef.current = (await loadingTask.promise) as unknown as typeof pdfDocRef.current;
+    })();
+    await pdfLoadingRef.current;
+  }
 
   const loadSinglePage = React.useCallback(
     async (p: number) => {
@@ -145,35 +173,15 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
       });
 
       try {
-        const res = await fetch(`/api/viewer/${jobId}/page/${p}`);
-        if (res.ok) {
-          const blob = await res.blob();
-          const objectUrl = URL.createObjectURL(blob);
-          loadedPagesRef.current.add(p);
-          setPageBlobs((prev) => ({ ...prev, [p]: objectUrl }));
-          return;
-        }
+        // Load PDF once then render requested page via client-side PDF.js
+        await ensurePdfLoaded(jobId);
+        const pdfDoc = pdfDocRef.current;
+        if (!pdfDoc) throw new Error("PDF document not loaded");
 
-        // Resilient Fallback: render directly using client-side PDF.js from secure PDF endpoint
-        const pdfRes = await fetch(`/api/viewer/${jobId}/pdf`);
-        if (!pdfRes.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(
-            errData.error || `Failed to load page ${p} (HTTP ${res.status})`
-          );
-        }
-
-        const pdfArrayBuffer = await pdfRes.arrayBuffer();
-        const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-        const loadingTask = pdfjsLib.getDocument({
-          data: new Uint8Array(pdfArrayBuffer),
-          useSystemFonts: true,
-          disableFontFace: false,
-        });
-        const pdfDoc = await loadingTask.promise;
-        const page = await pdfDoc.getPage(p);
+        const page = await (pdfDoc as { getPage: (n: number) => Promise<unknown> }).getPage(p);
         const scale = 2.0;
-        const viewport = page.getViewport({ scale });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const viewport = (page as any).getViewport({ scale });
         const canvas = document.createElement("canvas");
         canvas.width = Math.floor(viewport.width);
         canvas.height = Math.floor(viewport.height);
@@ -181,9 +189,10 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
         if (!ctx) throw new Error("Canvas context creation failed");
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (page as any).render({ canvasContext: ctx, viewport, canvas }).promise;
 
-        const dataUrl = canvas.toDataURL("image/webp", 0.9);
+        const dataUrl = canvas.toDataURL("image/webp", 0.92);
         loadedPagesRef.current.add(p);
         setPageBlobs((prev) => ({ ...prev, [p]: dataUrl }));
       } catch (err: unknown) {
@@ -281,7 +290,7 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
       <div className="dark min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col items-center justify-center p-6 gap-3">
         <Loader2 className="w-10 h-10 animate-spin text-[var(--accent)]" />
         <p className="text-xs text-[var(--text-muted)] font-semibold">
-          Verifying security authorization &amp; decrypting pages...
+          Verifying security authorization &amp; loading pages...
         </p>
       </div>
     );
@@ -540,7 +549,7 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                   <div className="h-96 flex flex-col items-center justify-center gap-2 text-[var(--text-muted)]">
                     <Loader2 className="w-7 h-7 animate-spin text-[var(--accent)]" />
                     <span className="text-xs font-semibold text-[var(--text)]">
-                      Decrypting &amp; watermarking page {pageNo}...
+                      Loading page {pageNo}...
                     </span>
                   </div>
                 )}

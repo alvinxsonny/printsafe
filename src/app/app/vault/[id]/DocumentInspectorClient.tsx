@@ -143,7 +143,7 @@ export function DocumentInspectorClient({
         <div className="p-16 flex flex-col items-center justify-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
           <p className="text-xs text-[var(--text-muted)] font-semibold">
-            Decrypting document pages...
+            Loading document...
           </p>
         </div>
       </CustomerShell>
@@ -207,8 +207,8 @@ export function DocumentInspectorClient({
             </h1>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">
               {doc.pageCount} {doc.pageCount === 1 ? "page" : "pages"} &bull;{" "}
-              {(doc.sizeBytes / 1024).toFixed(0)} KB &bull; Encrypted
-              AES-256-GCM
+              {(doc.sizeBytes / 1024).toFixed(0)} KB &bull; Stored in Private
+              Vault
             </p>
           </div>
           <Badge variant="live" size="sm">
@@ -239,7 +239,7 @@ export function DocumentInspectorClient({
                 Rendered Page Previews ({doc.pageCount})
               </h2>
               <span className="text-[11px] text-[var(--text-muted)]">
-                Rendered at 150 DPI &bull; WebP
+                PDF.js Client Render &bull; Crisp Text
               </span>
             </div>
 
@@ -430,88 +430,88 @@ function DocumentPagePreview({
   documentId: string;
   pageNo: number;
 }) {
-  const [useFallback, setUseFallback] = useState(false);
-  const [fallbackLoading, setFallbackLoading] = useState(false);
-  const [fallbackError, setFallbackError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [renderError, setRenderError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const hasRendered = useRef(false);
 
-  const handleFallback = async () => {
-    setUseFallback(true);
-    setFallbackLoading(true);
-    setFallbackError(null);
-    try {
-      const res = await fetch(`/api/documents/${documentId}/pdf`);
-      if (!res.ok) throw new Error("Failed to load PDF document");
-      const pdfBytes = await res.arrayBuffer();
-      const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-      const loadingTask = pdfjsLib.getDocument({
-        data: new Uint8Array(pdfBytes),
-        useSystemFonts: true,
-        disableFontFace: false,
-      });
-      const pdf = await loadingTask.promise;
-      const page = await pdf.getPage(pageNo);
-      const viewport = page.getViewport({ scale: 1.5 });
-      const canvas = canvasRef.current;
-      if (canvas) {
+  useEffect(() => {
+    if (hasRendered.current) return;
+    hasRendered.current = true;
+
+    let cancelled = false;
+
+    async function renderPage() {
+      setIsLoading(true);
+      setRenderError(null);
+      try {
+        const res = await fetch(`/api/documents/${documentId}/pdf`);
+        if (!res.ok) throw new Error("Failed to fetch PDF from vault");
+        const pdfBytes = await res.arrayBuffer();
+        if (cancelled) return;
+
+        const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+        const loadingTask = pdfjsLib.getDocument({
+          data: new Uint8Array(pdfBytes),
+          useSystemFonts: true,
+          disableFontFace: false,
+        });
+        const pdf = await loadingTask.promise;
+        if (cancelled) return;
+
+        const page = await pdf.getPage(pageNo);
+        // 1.5x scale ≈ 108 DPI — crisp text, manageable size
+        const viewport = page.getViewport({ scale: 1.5 });
+        const canvas = canvasRef.current;
+        if (!canvas || cancelled) return;
+
         canvas.width = Math.floor(viewport.width);
         canvas.height = Math.floor(viewport.height);
         const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          await page.render({ canvasContext: ctx, viewport, canvas }).promise;
-        }
-      }
-    } catch (err: unknown) {
-      setFallbackError(
-        err instanceof Error ? err.message : "Failed to load page"
-      );
-    } finally {
-      setFallbackLoading(false);
-    }
-  };
+        if (!ctx) throw new Error("Canvas context unavailable");
 
-  if (useFallback) {
-    if (fallbackLoading) {
-      return (
-        <div className="h-64 flex flex-col items-center justify-center gap-2 text-[var(--text-muted)]">
-          <Loader2 className="w-6 h-6 animate-spin text-[var(--accent)]" />
-          <span className="text-xs">Rendering page {pageNo}...</span>
-        </div>
-      );
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+      } catch (err: unknown) {
+        if (!cancelled) {
+          setRenderError(
+            err instanceof Error ? err.message : "Failed to render page"
+          );
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
     }
-    if (fallbackError) {
-      return (
-        <div className="h-64 flex flex-col items-center justify-center gap-2 text-[var(--danger)] text-center p-4">
-          <AlertCircle className="w-6 h-6" />
-          <span className="text-xs">{fallbackError}</span>
-          <button
-            type="button"
-            onClick={handleFallback}
-            className="text-xs underline text-[var(--accent)] mt-1 font-bold"
-          >
-            Retry
-          </button>
-        </div>
-      );
-    }
+
+    void renderPage();
+    return () => {
+      cancelled = true;
+    };
+  }, [documentId, pageNo]);
+
+  if (isLoading) {
     return (
-      <canvas
-        ref={canvasRef}
-        className="max-h-[600px] w-auto object-contain rounded shadow-sm border border-neutral-200"
-      />
+      <div className="h-64 flex flex-col items-center justify-center gap-2 text-[var(--text-muted)]">
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--accent)]" />
+        <span className="text-xs">Rendering page {pageNo}...</span>
+      </div>
+    );
+  }
+
+  if (renderError) {
+    return (
+      <div className="h-64 flex flex-col items-center justify-center gap-2 text-[var(--danger)] text-center p-4">
+        <AlertCircle className="w-6 h-6" />
+        <span className="text-xs">{renderError}</span>
+      </div>
     );
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={`/api/documents/${documentId}/pages/${pageNo}`}
-      alt={`Page ${pageNo} preview`}
+    <canvas
+      ref={canvasRef}
       className="max-h-[600px] w-auto object-contain rounded shadow-sm border border-neutral-200"
-      loading="lazy"
-      onError={handleFallback}
     />
   );
 }

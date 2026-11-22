@@ -260,7 +260,7 @@ export function VaultClient() {
       }
 
       setUploadProgress(75);
-      setUploadStatusText("Verifying magic bytes & envelope encrypting...");
+      setUploadStatusText("Verifying file integrity & securing to vault...");
 
       // 3. Finalize upload
       const finalizeRes = await fetch("/api/uploads/finalize", {
@@ -275,7 +275,7 @@ export function VaultClient() {
       }
 
       setUploadProgress(100);
-      setUploadStatusText("Encrypted & Ready in Vault!");
+      setUploadStatusText("Secured & Ready in Vault!");
 
       // Refresh documents
       await loadVault();
@@ -353,12 +353,12 @@ export function VaultClient() {
                 Document Vault
               </h1>
               <Badge variant="live" size="sm">
-                Envelope Encrypted
+                Private Vault
               </Badge>
             </div>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              Files are encrypted with unique per-document keys. Zero file
-              access is ever granted to print shops.
+              Files are stored privately. Zero file access is ever granted to
+              print shops until you share a secure one-time code.
             </p>
           </div>
 
@@ -519,7 +519,7 @@ export function VaultClient() {
                 />
               </div>
               <p className="text-[11px] text-[var(--text-muted)]">
-                Generating unique AES-256 key and encrypting document blob...
+                Securing your document to the private vault...
               </p>
             </div>
           ) : (
@@ -562,7 +562,7 @@ export function VaultClient() {
             <div className="p-12 flex flex-col items-center justify-center gap-2">
               <Loader2 className="w-6 h-6 animate-spin text-[var(--accent)]" />
               <span className="text-xs text-[var(--text-muted)]">
-                Decrypting vault catalog...
+                Loading your vault...
               </span>
             </div>
           ) : documents.length === 0 ? (
