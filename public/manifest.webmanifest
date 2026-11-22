@@ -1,7 +1,7 @@
 {
-  "name": "PrintSafe - Zero-Trust Printing",
+  "name": "PrintSafe",
   "short_name": "PrintSafe",
-  "description": "Zero-trust printing network for confidential documents, campus notes, and professional prints.",
+  "description": "Print anywhere. Share nothing.",
   "start_url": "/app",
   "scope": "/",
   "display": "standalone",

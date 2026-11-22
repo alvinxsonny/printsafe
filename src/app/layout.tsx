@@ -17,17 +17,16 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PrintSafe — Print anywhere. Share nothing.",
-  description:
-    "Zero-trust document printing platform protecting customer documents from Xerox shop leaks.",
+  title: "PrintSafe",
+  description: "Print anywhere. Share nothing.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
-      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
-      { url: "/icon.png", sizes: "64x64", type: "image/png" },
+      { url: "/favicon.png?v=3", sizes: "64x64", type: "image/png" },
+      { url: "/icon.png?v=3", sizes: "64x64", type: "image/png" },
     ],
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    shortcut: "/favicon.png?v=3",
+    apple: "/favicon.png?v=3",
   },
   appleWebApp: {
     capable: true,
@@ -45,7 +44,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${googleSansFlex.variable} ${dmMono.variable} dark`}
+      className={`${googleSansFlex.variable} ${dmMono.variable}`}
     >
       <body className="antialiased min-h-screen">
         <ThemeProvider>{children}</ThemeProvider>

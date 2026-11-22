@@ -776,16 +776,16 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="mt-auto border-t border-[var(--border)] bg-[var(--surface)] py-14 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-sm text-[var(--text-muted)]">
-          <div className="flex items-center gap-3.5">
-            <Logo size={40} showText={false} />
-            <div className="flex flex-col">
+          <div className="flex items-center gap-4">
+            <Logo size={68} showText={false} />
+            <div className="flex flex-col justify-between py-0.5">
               <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-[var(--text)] leading-tight">
                 Print<span className="text-[var(--accent)]">Safe</span>
               </span>
-              <span className="text-xs text-[var(--text-muted)] font-medium">
+              <span className="text-xs text-[var(--text-muted)] font-medium leading-normal">
                 Print anywhere. Share nothing.
               </span>
-              <span className="text-xs text-[var(--text-muted)] pt-1">
+              <span className="text-xs text-[var(--text-muted)] leading-normal">
                 Made by{" "}
                 <span className="font-bold text-[var(--text)]">Alvin</span>
               </span>
