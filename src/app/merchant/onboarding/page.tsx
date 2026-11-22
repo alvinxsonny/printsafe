@@ -17,6 +17,9 @@ import {
   Upload,
   ShieldCheck,
   Save,
+  Download,
+  Monitor,
+  Laptop,
 } from "lucide-react";
 import {
   Card3D,
@@ -120,6 +123,10 @@ export default function MerchantOnboardingPage() {
   >(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+
+  // Terminal Security Pre-requisite
+  const [terminalSecured, setTerminalSecured] = useState(false);
+  const [selectedOsTab, setSelectedOsTab] = useState<"windows" | "mac">("windows");
 
   // Load existing draft
   useEffect(() => {
@@ -1413,6 +1420,149 @@ export default function MerchantOnboardingPage() {
               )}
             </div>
 
+            {/* Terminal Security Pre-requisite Setup */}
+            <div className="p-5 sm:p-6 rounded-2xl bg-[var(--surface-2)] border-2 border-[var(--border)] space-y-5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[var(--accent-fill)]/15 border border-[var(--accent)] flex items-center justify-center shrink-0 text-[var(--accent)]">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-extrabold text-[var(--text)]">
+                      Terminal Security Setup (Required Pre-requisite)
+                    </h3>
+                    <Badge variant="live" size="sm">
+                      Mandatory
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    To safeguard customer privacy, PrintSafe requires all merchant print stations to disable the browser&apos;s &ldquo;Save as PDF&rdquo; option. Download and run the one-click lockdown script below for your terminal computer.
+                  </p>
+                </div>
+              </div>
+
+              {/* OS Selection Tabs */}
+              <div className="flex items-center gap-2 border-b border-[var(--border)] pb-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedOsTab("windows")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                    selectedOsTab === "windows"
+                      ? "bg-[var(--accent)] text-zinc-950"
+                      : "bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--text)] border border-[var(--border)]"
+                  }`}
+                >
+                  <Monitor className="w-3.5 h-3.5" />
+                  <span>Windows (PC)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedOsTab("mac")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                    selectedOsTab === "mac"
+                      ? "bg-[var(--accent)] text-zinc-950"
+                      : "bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--text)] border border-[var(--border)]"
+                  }`}
+                >
+                  <Laptop className="w-3.5 h-3.5" />
+                  <span>macOS (Apple Mac)</span>
+                </button>
+              </div>
+
+              {/* Tab Content: Windows */}
+              {selectedOsTab === "windows" && (
+                <div className="space-y-3 text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
+                    <div>
+                      <p className="font-bold text-[var(--text)]">
+                        PrintSafe Terminal Lockdown Script (Windows)
+                      </p>
+                      <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                        Applies policies for Chrome, Edge, Brave, and Windows Print to PDF.
+                      </p>
+                    </div>
+                    <a
+                      href="/downloads/printsafe-terminal-lock.bat"
+                      download="printsafe-terminal-lock.bat"
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[var(--accent)] text-zinc-950 hover:opacity-90 shrink-0"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download .BAT Script</span>
+                    </a>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] space-y-2">
+                    <span className="font-bold text-[var(--text)] text-[11px] uppercase tracking-wider block">
+                      How to install &amp; run on your Windows PC:
+                    </span>
+                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-[var(--text-muted)] leading-relaxed">
+                      <li>Click the button above to download <code className="text-[var(--accent)] font-mono">printsafe-terminal-lock.bat</code>.</li>
+                      <li>Find the downloaded file in your Downloads folder, <strong>right-click it</strong>, and select <strong>&ldquo;Run as administrator&rdquo;</strong>.</li>
+                      <li>Press any key when the command window completes the setup.</li>
+                      <li><strong>Close and reopen your browser</strong> (Chrome or Edge) for changes to activate.</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab Content: macOS */}
+              {selectedOsTab === "mac" && (
+                <div className="space-y-3 text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
+                    <div>
+                      <p className="font-bold text-[var(--text)]">
+                        PrintSafe Terminal Lockdown Script (macOS)
+                      </p>
+                      <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                        Applies system preferences for Chrome, Edge, and Brave.
+                      </p>
+                    </div>
+                    <a
+                      href="/downloads/printsafe-terminal-lock.sh"
+                      download="printsafe-terminal-lock.sh"
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[var(--accent)] text-zinc-950 hover:opacity-90 shrink-0"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download .SH Script</span>
+                    </a>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-[var(--surface)]/60 border border-[var(--border)] space-y-2">
+                    <span className="font-bold text-[var(--text)] text-[11px] uppercase tracking-wider block">
+                      How to install &amp; run on your Mac:
+                    </span>
+                    <ol className="list-decimal list-inside space-y-1 text-[11px] text-[var(--text-muted)] leading-relaxed">
+                      <li>Click the button above to download <code className="text-[var(--accent)] font-mono">printsafe-terminal-lock.sh</code>.</li>
+                      <li>Open Terminal and run: <code className="text-[var(--accent)] font-mono">sudo bash ~/Downloads/printsafe-terminal-lock.sh</code></li>
+                      <li>Enter your Mac password to grant preference permission.</li>
+                      <li>Completely quit (<kbd className="font-mono">Cmd + Q</kbd>) and restart your browser.</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {/* Acknowledgment Checkbox */}
+              <div className="pt-3 border-t border-[var(--border)]">
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={terminalSecured}
+                    onChange={(e) => setTerminalSecured(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-[var(--accent)] rounded cursor-pointer shrink-0"
+                  />
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-[var(--text)]">
+                      I confirm that I have downloaded and successfully executed the lockdown script on this shop terminal.
+                    </span>
+                    <p className="text-[11px] text-[var(--text-muted)]">
+                      &ldquo;Save as PDF&rdquo; has been removed or restricted in our browser so customer documents cannot be exported.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             {/* Privacy & Admin Review Disclosure */}
             <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] text-xs text-[var(--text-muted)] flex items-start gap-3">
               <ShieldCheck className="w-5 h-5 text-[var(--accent)] shrink-0 mt-0.5" />
@@ -1436,25 +1586,32 @@ export default function MerchantOnboardingPage() {
                 Back
               </Button3D>
 
-              <Button3D
-                type="button"
-                variant="primary"
-                onClick={() => handleSubmit(false)}
-                disabled={isSubmitting || !contactPhone.trim()}
-                className="flex items-center gap-1.5 px-6"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Submitting Application...
-                  </>
-                ) : (
-                  <>
-                    Submit Application
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </Button3D>
+              {terminalSecured ? (
+                <Button3D
+                  type="button"
+                  variant="primary"
+                  onClick={() => handleSubmit(false)}
+                  disabled={isSubmitting || !contactPhone.trim()}
+                  className="flex items-center gap-1.5 px-6 animate-in fade-in duration-200"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Submitting Application...
+                    </>
+                  ) : (
+                    <>
+                      Submit Application
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </Button3D>
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-[var(--warm)] bg-[var(--warm-fill)]/15 border border-[var(--warm)]/30 px-4 py-2.5 rounded-xl font-semibold">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>Acknowledge terminal setup above to enable submission</span>
+                </div>
+              )}
             </div>
           </Card3D>
         )}
