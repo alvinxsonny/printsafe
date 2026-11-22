@@ -173,7 +173,7 @@ export default function LandingPage() {
       {/* The Problem Section */}
       <section
         id="problem"
-        className="scroll-mt-28 py-24 px-4 sm:px-6 lg:px-8 bg-[var(--surface)] border-y border-[var(--border)]"
+        className="scroll-mt-28 py-24 px-4 sm:px-6 lg:px-8 bg-[var(--surface)]/60 backdrop-blur-xs border-y border-[var(--border)]"
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -306,7 +306,7 @@ export default function LandingPage() {
       {/* Privacy Guarantees */}
       <section
         id="privacy"
-        className="scroll-mt-28 py-24 px-4 sm:px-6 lg:px-8 bg-[var(--surface)] border-y border-[var(--border)]"
+        className="scroll-mt-28 py-24 px-4 sm:px-6 lg:px-8 bg-[var(--surface)]/60 backdrop-blur-xs border-y border-[var(--border)]"
       >
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
