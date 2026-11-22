@@ -9,7 +9,6 @@ import {
   Compass,
   Phone,
   ExternalLink,
-  Bell,
   RotateCw,
   List,
   Map as MapIcon,
@@ -19,6 +18,9 @@ import {
   ChevronDown,
   X,
   Loader2,
+  TreePine,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Card3D, Button3D, Badge, Modal } from "@/components/ui";
@@ -33,7 +35,11 @@ interface CustomerHomeClientProps {
   initialHasNoPrintsLast30Days?: boolean;
 }
 
-const DEFAULT_CENTER = { lat: 12.9716, lng: 77.5946 }; // Bangalore default
+const DEFAULT_CENTER = {
+  lat: 12.9716,
+  lng: 77.5946,
+  name: "Bangalore Central",
+};
 const STORAGE_KEY = "printsafe_user_location";
 
 function getInitialLocation(): {
@@ -59,7 +65,7 @@ export function CustomerHomeClient({
   initialSheetsPrintedTotal = 0,
   initialHasNoPrintsLast30Days = false,
 }: CustomerHomeClientProps) {
-  // Footprint Tree states (Phase 14)
+  // Footprint Tree states
   const [sheetsPrintedTotal, setSheetsPrintedTotal] = useState(
     initialSheetsPrintedTotal
   );
@@ -70,9 +76,11 @@ export function CustomerHomeClient({
 
   // Location states
   const [userLocation, setUserLocation] = useState(getInitialLocation);
-  const [showLocationModal, setShowLocationModal] = useState(
-    () => !getInitialLocation()
-  );
+  const [showLocationModal, setShowLocationModal] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return !getInitialLocation();
+  });
+  const [dismissLocationBanner, setDismissLocationBanner] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
 
@@ -92,12 +100,12 @@ export function CustomerHomeClient({
   const [radiusM, setRadiusM] = useState(5000); // 5 km default
   const [includeClosed, setIncludeClosed] = useState(false);
 
-  // View mode & Mobile Sheet
+  // View mode & UI Layout
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
-  const [notifySubscribed, setNotifySubscribed] = useState(false);
 
-  // Live Footprint Refresh (Phase 14)
+  // Live Footprint Refresh
   useEffect(() => {
     let ignore = false;
     async function loadFootprint() {
@@ -124,13 +132,12 @@ export function CustomerHomeClient({
 
   // 1. Reactive Fetch on Location / Radius / IncludeClosed changes
   useEffect(() => {
-    const loc = userLocation;
-    if (!loc) return;
+    const loc = userLocation || DEFAULT_CENTER;
     let cancelled = false;
 
     async function load() {
-      if (!loc) return;
       try {
+        setIsLoadingShops(true);
         const url = new URL("/api/shops/nearby", window.location.origin);
         url.searchParams.set("lat", loc.lat.toString());
         url.searchParams.set("lng", loc.lng.toString());
@@ -146,6 +153,8 @@ export function CustomerHomeClient({
         }
       } catch (err) {
         console.warn("Failed to load nearby shops:", err);
+      } finally {
+        if (!cancelled) setIsLoadingShops(false);
       }
     }
 
@@ -158,13 +167,13 @@ export function CustomerHomeClient({
 
   // 2. Manual and polling refresh function
   const refreshShops = useCallback(async () => {
-    if (!userLocation) return;
+    const loc = userLocation || DEFAULT_CENTER;
 
     try {
       setIsLoadingShops(true);
       const url = new URL("/api/shops/nearby", window.location.origin);
-      url.searchParams.set("lat", userLocation.lat.toString());
-      url.searchParams.set("lng", userLocation.lng.toString());
+      url.searchParams.set("lat", loc.lat.toString());
+      url.searchParams.set("lng", loc.lng.toString());
       url.searchParams.set("radius", radiusM.toString());
       if (includeClosed) {
         url.searchParams.set("includeClosed", "true");
@@ -184,8 +193,6 @@ export function CustomerHomeClient({
 
   // 3. Live 15s Polling while tab is visible
   useEffect(() => {
-    if (!userLocation) return;
-
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") {
         void refreshShops();
@@ -193,7 +200,7 @@ export function CustomerHomeClient({
     }, 15000);
 
     return () => clearInterval(interval);
-  }, [userLocation, refreshShops]);
+  }, [refreshShops]);
 
   // 4. Request Browser Geolocation
   function handleRequestLocation() {
@@ -211,7 +218,7 @@ export function CustomerHomeClient({
         const loc = {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
-          name: "Current Location",
+          name: "My Location",
         };
         setUserLocation(loc);
         try {
@@ -219,15 +226,15 @@ export function CustomerHomeClient({
         } catch {}
         setIsLocating(false);
         setShowLocationModal(false);
+        setDismissLocationBanner(true);
       },
       (err) => {
         console.warn("Geolocation denied or unavailable:", err.message);
         setLocationError(
-          "Location access was denied. You can search your area or landmark below."
+          "Location access was denied. You can search your landmark or use Bangalore default."
         );
         setIsLocating(false);
-        // Fall back to default location
-        const defaultLoc = { ...DEFAULT_CENTER, name: "Bangalore Central" };
+        const defaultLoc = DEFAULT_CENTER;
         setUserLocation(defaultLoc);
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultLoc));
@@ -283,9 +290,9 @@ export function CustomerHomeClient({
     setSearchQuery("");
     setShowSearchResults(false);
     setShowLocationModal(false);
+    setDismissLocationBanner(true);
   }
 
-  // Format distance
   function formatDistance(m: number): string {
     if (m < 1000) {
       return `${Math.round(m)} m away`;
@@ -294,108 +301,123 @@ export function CustomerHomeClient({
   }
 
   return (
-    <CustomerShell userAlias={userAlias}>
-      <div className="relative flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg)]">
-        {/* Top Floating Control Bar */}
-        <div className="z-20 p-3 sm:p-4 bg-[var(--surface)]/95 backdrop-blur-md border-b border-[var(--border)] flex flex-wrap items-center justify-between gap-3 shadow-xs">
-          {/* Location & Search Combo */}
-          <div className="relative flex-1 min-w-[280px] max-w-md">
-            <div className="relative flex items-center">
-              <Search className="absolute left-3 w-4 h-4 text-[var(--text-muted)]" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => handleSearchInputChange(e.target.value)}
-                onFocus={() => {
-                  if (searchResults.length > 0) setShowSearchResults(true);
-                }}
-                placeholder={
-                  userLocation?.name
-                    ? `Near ${userLocation.name}... Search landmark`
-                    : "Search landmark, college, or area..."
-                }
-                className="w-full h-10 pl-9 pr-8 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] text-xs text-[var(--text)] font-medium focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-              />
-              {isSearching ? (
-                <Loader2 className="absolute right-2.5 w-3.5 h-3.5 animate-spin text-[var(--accent)]" />
-              ) : searchQuery ? (
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setShowSearchResults(false);
-                  }}
-                  className="absolute right-2.5 text-[var(--text-muted)] hover:text-[var(--text)]"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              ) : null}
-            </div>
+    <CustomerShell userAlias={userAlias} fullBleed={true}>
+      <div className="relative w-full h-full overflow-hidden flex flex-col bg-[var(--bg)] select-none">
+        {/* Sleek Minimal Floating Control Bar */}
+        <div className="z-30 w-full px-3 py-2.5 sm:px-4 bg-[var(--surface)]/95 backdrop-blur-md border-b border-[var(--border)] flex flex-wrap items-center justify-between gap-2.5 shrink-0 shadow-xs">
+          {/* Left: Location Picker Pill & Search Box */}
+          <div className="flex items-center gap-2 flex-1 min-w-[260px] max-w-xl">
+            {/* Quick Location Pill */}
+            <button
+              onClick={() => setShowLocationModal(true)}
+              className="h-9 px-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text)] flex items-center gap-1.5 shrink-0 transition-colors"
+              title="Change Search Location"
+            >
+              <MapPin className="w-3.5 h-3.5 text-[var(--accent)]" />
+              <span className="max-w-[110px] sm:max-w-[150px] truncate">
+                {userLocation?.name || "Bangalore Central"}
+              </span>
+            </button>
 
-            {/* Search Dropdown Results */}
-            {showSearchResults && searchResults.length > 0 && (
-              <div className="absolute left-0 right-0 top-12 z-50 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xl overflow-hidden max-h-60 overflow-y-auto">
-                {searchResults.map((place, idx) => (
+            {/* Landmark / Area Search Input */}
+            <div className="relative flex-1">
+              <div className="relative flex items-center">
+                <Search className="absolute left-2.5 w-3.5 h-3.5 text-[var(--text-muted)]" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchInputChange(e.target.value)}
+                  onFocus={() => {
+                    if (searchResults.length > 0) setShowSearchResults(true);
+                  }}
+                  placeholder="Search landmark, college, or area..."
+                  className="w-full h-9 pl-8 pr-7 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] text-xs text-[var(--text)] font-medium focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                />
+                {isSearching ? (
+                  <Loader2 className="absolute right-2.5 w-3.5 h-3.5 animate-spin text-[var(--accent)]" />
+                ) : searchQuery ? (
                   <button
-                    key={idx}
-                    onClick={() => handleSelectPlace(place)}
-                    className="w-full p-2.5 text-left text-xs border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition-colors flex items-start gap-2.5"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setShowSearchResults(false);
+                    }}
+                    className="absolute right-2 text-[var(--text-muted)] hover:text-[var(--text)]"
                   >
-                    <MapPin className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
-                    <div className="truncate">
-                      <p className="font-bold text-[var(--text)] truncate">
-                        {place.locality || place.city || place.displayName}
-                      </p>
-                      <p className="text-[10px] text-[var(--text-muted)] truncate">
-                        {place.displayName}
-                      </p>
-                    </div>
+                    <X className="w-3.5 h-3.5" />
                   </button>
-                ))}
+                ) : null}
               </div>
-            )}
+
+              {/* Search Dropdown Results */}
+              {showSearchResults && searchResults.length > 0 && (
+                <div className="absolute left-0 right-0 top-11 z-[60] rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+                  {searchResults.map((place, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSelectPlace(place)}
+                      className="w-full p-2.5 text-left text-xs border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition-colors flex items-start gap-2.5"
+                    >
+                      <MapPin className="w-4 h-4 text-[var(--accent)] shrink-0 mt-0.5" />
+                      <div className="truncate">
+                        <p className="font-bold text-[var(--text)] truncate">
+                          {place.locality || place.city || place.displayName}
+                        </p>
+                        <p className="text-[10px] text-[var(--text-muted)] truncate">
+                          {place.displayName}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Quick Controls: Radius, Closed Toggle, Locate Button, Mode */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            {/* Radius Selector */}
-            <select
-              value={radiusM}
-              onChange={(e) => setRadiusM(parseInt(e.target.value, 10))}
-              className="h-9 px-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] text-xs font-semibold text-[var(--text)] focus:outline-none"
+          {/* Right: Clean, Streamlined Controls */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Open Now Toggle Pill */}
+            <button
+              onClick={() => setIncludeClosed(!includeClosed)}
+              className={`h-9 px-3 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                !includeClosed
+                  ? "bg-[var(--accent-fill)]/20 border-[var(--accent)] text-[var(--text)]"
+                  : "bg-[var(--surface-2)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]"
+              }`}
+              title={
+                !includeClosed
+                  ? "Showing Open Shops Only"
+                  : "Showing All Shops (including closed)"
+              }
             >
-              <option value={1000}>Within 1 km</option>
-              <option value={3000}>Within 3 km</option>
-              <option value={5000}>Within 5 km</option>
-              <option value={10000}>Within 10 km</option>
-            </select>
-
-            {/* Show Closed Toggle */}
-            <div className="flex items-center gap-1.5 pl-2 border-l border-[var(--border)]">
-              <label
-                htmlFor="toggle-closed"
-                className="text-[11px] font-bold text-[var(--text-muted)] select-none hidden sm:inline"
-              >
-                Closed Shops
-              </label>
-              <button
-                id="toggle-closed"
-                onClick={() => setIncludeClosed(!includeClosed)}
-                className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
-                  includeClosed
-                    ? "bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)]"
-                    : "bg-transparent text-[var(--text-muted)] hover:text-[var(--text)]"
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  !includeClosed ? "bg-[var(--accent-fill)]" : "bg-gray-400"
                 }`}
+              />
+              <span>{!includeClosed ? "Open Now" : "All Shops"}</span>
+            </button>
+
+            {/* Radius Selector Chip */}
+            <div className="relative">
+              <select
+                value={radiusM}
+                onChange={(e) => setRadiusM(parseInt(e.target.value, 10))}
+                className="h-9 px-2.5 pr-6 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] text-xs font-bold text-[var(--text)] focus:outline-none cursor-pointer appearance-none"
               >
-                {includeClosed ? "Showing All" : "Live Only"}
-              </button>
+                <option value={1000}>1 km</option>
+                <option value={3000}>3 km</option>
+                <option value={5000}>5 km</option>
+                <option value={10000}>10 km</option>
+              </select>
+              <ChevronDown className="w-3 h-3 text-[var(--text-muted)] absolute right-2 top-3 pointer-events-none" />
             </div>
 
-            {/* Locate Me Button */}
+            {/* Locate Me (GPS) Button */}
             <button
               onClick={handleRequestLocation}
               disabled={isLocating}
-              className="h-9 w-9 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-[var(--text)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all"
-              title="Use Current Location"
+              className="h-9 w-9 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-[var(--text)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all shrink-0"
+              title="Use Current GPS Location"
             >
               {isLocating ? (
                 <Loader2 className="w-4 h-4 animate-spin text-[var(--accent)]" />
@@ -404,11 +426,38 @@ export function CustomerHomeClient({
               )}
             </button>
 
-            {/* View Mode Switcher (Accessible list alternative) */}
-            <div className="flex items-center bg-[var(--surface-2)] p-0.5 rounded-xl border border-[var(--border)]">
+            {/* Paper Footprint Button (Minimal Tree SVG) */}
+            <Button3D
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTreeModal(true)}
+              className="h-9 flex items-center gap-1.5 text-xs font-bold shrink-0 px-2.5"
+              title="View Paper Footprint Tree"
+            >
+              <TreePine className="w-4 h-4 text-[var(--accent)]" />
+              <span className="hidden sm:inline font-mono text-[11px]">
+                {sheetsPrintedTotal}
+              </span>
+            </Button3D>
+
+            {/* Desktop Sidebar Toggle */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="hidden lg:flex h-9 w-9 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] items-center justify-center text-[var(--text)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-all shrink-0"
+              title={isSidebarOpen ? "Hide Counter List" : "Show Counter List"}
+            >
+              {isSidebarOpen ? (
+                <PanelLeftClose className="w-4 h-4" />
+              ) : (
+                <PanelLeftOpen className="w-4 h-4" />
+              )}
+            </button>
+
+            {/* View Mode Toggle (Map / List) */}
+            <div className="flex items-center bg-[var(--surface-2)] p-0.5 rounded-xl border border-[var(--border)] shrink-0">
               <button
                 onClick={() => setViewMode("map")}
-                className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ${
+                className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
                   viewMode === "map"
                     ? "bg-[var(--surface)] text-[var(--text)] shadow-xs"
                     : "text-[var(--text-muted)] hover:text-[var(--text)]"
@@ -420,7 +469,7 @@ export function CustomerHomeClient({
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ${
+                className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
                   viewMode === "list"
                     ? "bg-[var(--surface)] text-[var(--text)] shadow-xs"
                     : "text-[var(--text-muted)] hover:text-[var(--text)]"
@@ -431,61 +480,70 @@ export function CustomerHomeClient({
                 <span className="hidden md:inline">List</span>
               </button>
             </div>
-
-            {/* Paper Footprint Button (Phase 14) */}
-            <Button3D
-              variant="outline"
-              size="sm"
-              onClick={() => setShowTreeModal(true)}
-              className="flex items-center gap-1.5 text-xs font-bold shrink-0"
-              title="View Paper Footprint Tree"
-            >
-              <span className="text-sm">🌳</span>
-              <span className="hidden sm:inline">Footprint</span>
-            </Button3D>
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="relative flex-1 flex overflow-hidden">
-          {/* Desktop Left Side Panel (List & Details) */}
-          <div className="hidden lg:flex flex-col w-[400px] border-r border-[var(--border)] bg-[var(--surface)] overflow-hidden shrink-0 z-10">
-            {/* Paper Footprint Summary Banner in Sidebar */}
-            <div className="p-3 border-b border-[var(--border)] bg-[var(--surface-2)]/60 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-base">🌳</span>
-                <div>
-                  <p className="text-xs font-bold text-[var(--text)]">
-                    {sheetsPrintedTotal}{" "}
-                    {sheetsPrintedTotal === 1 ? "sheet" : "sheets"} printed
-                  </p>
-                  <p className="text-[10px] text-[var(--text-muted)]">
-                    Paper footprint tree
-                  </p>
-                </div>
+        {/* Floating Location Enable Prompt Banner (non-intrusive) */}
+        {!userLocation && !dismissLocationBanner && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 max-w-md w-[92%] sm:w-auto bg-[var(--surface)]/95 backdrop-blur-md border border-[var(--accent)]/50 rounded-2xl p-3 shadow-xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-3 duration-300">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[var(--accent-fill)]/20 border border-[var(--accent)] flex items-center justify-center text-[var(--accent)] shrink-0">
+                <Navigation className="w-4 h-4 animate-pulse" />
               </div>
-              <button
-                onClick={() => setShowTreeModal(true)}
-                className="text-[11px] text-[var(--accent)] font-bold hover:underline"
+              <div>
+                <p className="text-xs font-bold text-[var(--text)]">
+                  Enable Location
+                </p>
+                <p className="text-[10px] text-[var(--text-muted)]">
+                  Find verified Xerox shops near you
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button3D
+                variant="primary"
+                size="sm"
+                onClick={handleRequestLocation}
+                disabled={isLocating}
+                className="text-xs px-3 font-bold"
               >
-                View Tree &rarr;
+                {isLocating ? "Locating..." : "Share Location"}
+              </Button3D>
+              <button
+                onClick={() => setDismissLocationBanner(true)}
+                className="p-1 text-[var(--text-muted)] hover:text-[var(--text)]"
+                title="Dismiss"
+              >
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
-            <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
+          </div>
+        )}
+
+        {/* Full Screen Content: Direct Map & Desktop Floating Sidebar */}
+        <div className="relative flex-1 w-full h-full overflow-hidden flex">
+          {/* Desktop Left Side Panel (Storefronts List & Details) */}
+          <div
+            className={`hidden lg:flex flex-col border-r border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-md overflow-hidden shrink-0 z-20 transition-all duration-300 ${
+              isSidebarOpen ? "w-[380px]" : "w-0 border-r-0"
+            }`}
+          >
+            {/* Sidebar Header */}
+            <div className="p-3.5 border-b border-[var(--border)] flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-extrabold text-[var(--text)]">
-                  Print Shops Nearby
+                <h2 className="text-xs font-extrabold text-[var(--text)]">
+                  Verified Xerox Counters
                 </h2>
-                <p className="text-[11px] text-[var(--text-muted)]">
+                <p className="text-[10px] text-[var(--text-muted)]">
                   {shops.length}{" "}
-                  {shops.length === 1 ? "storefront" : "storefronts"} found
-                  &bull; Auto-refreshes every 15s
+                  {shops.length === 1 ? "storefront" : "storefronts"} nearby
+                  &bull; Live updates
                 </p>
               </div>
               <button
                 onClick={refreshShops}
                 className="text-[var(--text-muted)] hover:text-[var(--text)] p-1.5 rounded-lg"
-                title="Refresh Live Status"
+                title="Refresh Shop Status"
               >
                 <RotateCw
                   className={`w-3.5 h-3.5 ${isLoadingShops ? "animate-spin" : ""}`}
@@ -493,17 +551,18 @@ export function CustomerHomeClient({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {/* Storefronts List */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
               {isLoadingShops && shops.length === 0 ? (
                 <div className="p-8 text-center space-y-2">
-                  <Loader2 className="w-6 h-6 animate-spin text-[var(--accent)] mx-auto" />
+                  <Loader2 className="w-5 h-5 animate-spin text-[var(--accent)] mx-auto" />
                   <p className="text-xs text-[var(--text-muted)]">
-                    Locating verified copy shops...
+                    Finding verified print shops...
                   </p>
                 </div>
               ) : shops.length === 0 ? (
-                <div className="p-8 text-center space-y-3">
-                  <AlertCircle className="w-8 h-8 text-[var(--warm)] mx-auto opacity-70" />
+                <div className="p-6 text-center space-y-3">
+                  <AlertCircle className="w-7 h-7 text-[var(--warm)] mx-auto opacity-70" />
                   <h3 className="text-xs font-bold text-[var(--text)]">
                     No Live Shops Found
                   </h3>
@@ -518,23 +577,10 @@ export function CustomerHomeClient({
                       setRadiusM(10000);
                       setIncludeClosed(true);
                     }}
-                    className="w-full text-xs"
+                    className="w-full text-xs font-bold"
                   >
                     Expand Search to 10 km
                   </Button3D>
-
-                  <div className="pt-3 border-t border-[var(--border)]">
-                    <button
-                      onClick={() => setNotifySubscribed(true)}
-                      disabled={notifySubscribed}
-                      className="text-[11px] text-[var(--accent)] font-bold flex items-center justify-center gap-1.5 mx-auto hover:underline"
-                    >
-                      <Bell className="w-3.5 h-3.5" />
-                      {notifySubscribed
-                        ? "Notification set for when a shop goes Live!"
-                        : "Notify me when a shop opens"}
-                    </button>
-                  </div>
                 </div>
               ) : (
                 shops.map((shop) => (
@@ -549,58 +595,39 @@ export function CustomerHomeClient({
               )}
             </div>
 
-            {/* Selected Shop Floating Drawer at Bottom of Panel */}
+            {/* Selected Shop Action Card at Bottom of Sidebar */}
             {selectedShop && (
-              <div className="p-4 border-t border-[var(--border)] bg-[var(--surface-2)] space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <div className="p-3.5 border-t border-[var(--border)] bg-[var(--surface-2)] space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-sm font-extrabold text-[var(--text)]">
+                  <div className="truncate">
+                    <h3 className="text-xs font-extrabold text-[var(--text)] truncate">
                       {selectedShop.name}
                     </h3>
-                    <p className="text-[11px] text-[var(--text-muted)]">
+                    <p className="text-[10px] text-[var(--text-muted)] truncate">
                       {selectedShop.locality || selectedShop.city} &bull;{" "}
                       {formatDistance(selectedShop.distanceMeters)}
                     </p>
                   </div>
                   <button
                     onClick={() => setSelectedShop(null)}
-                    className="text-[var(--text-muted)] hover:text-[var(--text)]"
+                    className="text-[var(--text-muted)] hover:text-[var(--text)] p-1"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={selectedShop.isLive ? "live" : "offline"}
-                    size="sm"
-                  >
-                    {selectedShop.isLive ? "Open & Live" : "Closed"}
-                  </Badge>
-                  {selectedShop.capacityState === "busy" && (
-                    <Badge variant="neutral" size="sm">
-                      Busy (5+ in queue)
-                    </Badge>
-                  )}
-                  {selectedShop.capacityState === "at_capacity" && (
-                    <Badge variant="rejected" size="sm">
-                      At Capacity
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[11px] bg-[var(--surface)] p-2.5 rounded-xl border border-[var(--border)]">
+                <div className="grid grid-cols-2 gap-2 text-[11px] bg-[var(--surface)] p-2 rounded-xl border border-[var(--border)]">
                   <div>
-                    <span className="text-[var(--text-muted)] block text-[10px]">
-                      B&amp;W Page
+                    <span className="text-[var(--text-muted)] block text-[9px] uppercase tracking-wider font-semibold">
+                      B&amp;W Rate
                     </span>
                     <span className="font-extrabold font-mono text-[var(--text)]">
                       ₹{(selectedShop.priceBwPaise / 100).toFixed(2)}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[var(--text-muted)] block text-[10px]">
-                      Colour Page
+                    <span className="text-[var(--text-muted)] block text-[9px] uppercase tracking-wider font-semibold">
+                      Colour Rate
                     </span>
                     <span className="font-extrabold font-mono text-[var(--text)]">
                       ₹{(selectedShop.priceColorPaise / 100).toFixed(2)}
@@ -618,10 +645,10 @@ export function CustomerHomeClient({
                     <Button3D
                       variant="secondary"
                       size="sm"
-                      className="w-full flex items-center justify-center gap-1.5 text-xs"
+                      className="w-full flex items-center justify-center gap-1 text-xs"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      Directions
+                      <ExternalLink className="w-3 h-3" />
+                      Map
                     </Button3D>
                   </a>
 
@@ -652,7 +679,7 @@ export function CustomerHomeClient({
                       className="w-full flex items-center justify-center gap-1.5 text-xs font-bold"
                     >
                       <Printer className="w-3.5 h-3.5" />
-                      Request Print
+                      Print
                     </Button3D>
                   </Link>
                 </div>
@@ -660,11 +687,11 @@ export function CustomerHomeClient({
             )}
           </div>
 
-          {/* Map View / Mobile Sheet Container */}
-          <div className="relative flex-1 h-full w-full">
+          {/* Full Browser Width & Height Map Canvas */}
+          <div className="relative flex-1 w-full h-full overflow-hidden">
             {viewMode === "map" ? (
               <ShopMap
-                userLocation={userLocation}
+                userLocation={userLocation || DEFAULT_CENTER}
                 shops={shops}
                 selectedShopId={selectedShop?.id || null}
                 onSelectShop={(shop) => {
@@ -677,15 +704,15 @@ export function CustomerHomeClient({
               /* Accessible Pure List View Alternative */
               <div className="w-full h-full p-4 sm:p-6 overflow-y-auto max-w-2xl mx-auto space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold">
-                    Nearby Print Shops List ({shops.length})
+                  <h2 className="text-base font-bold">
+                    Nearby Xerox Shops ({shops.length})
                   </h2>
                   <Badge variant="live" size="sm">
-                    Accessible List
+                    List Mode
                   </Badge>
                 </div>
 
-                {/* Paper Footprint Card (Phase 14) */}
+                {/* Paper Footprint Card */}
                 <FootprintTreeCard
                   sheetsPrintedTotal={sheetsPrintedTotal}
                   hasNoPrintsLast30Days={hasNoPrintsLast30Days}
@@ -699,10 +726,10 @@ export function CustomerHomeClient({
                   </Card3D>
                 ) : (
                   shops.map((shop) => (
-                    <Card3D key={shop.id} className="p-4 space-y-3">
+                    <Card3D key={shop.id} className="p-3.5 space-y-2.5">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="text-base font-bold text-[var(--text)]">
+                          <h3 className="text-sm font-bold text-[var(--text)]">
                             {shop.name}
                           </h3>
                           <p className="text-xs text-[var(--text-muted)]">
@@ -738,7 +765,7 @@ export function CustomerHomeClient({
                               !shop.isLive ||
                               shop.capacityState === "at_capacity"
                             }
-                            className="flex items-center gap-1.5 text-xs"
+                            className="flex items-center gap-1.5 text-xs font-bold"
                           >
                             <Printer className="w-3.5 h-3.5" />
                             Request Print
@@ -874,11 +901,11 @@ export function CustomerHomeClient({
           </div>
         </div>
 
-        {/* Location Permission Explanation Modal */}
+        {/* Location Permission / Selector Modal */}
         <Modal
           isOpen={showLocationModal}
           onClose={() => setShowLocationModal(false)}
-          title="Find Nearby Print Shops"
+          title="Choose Your Location"
         >
           <div className="space-y-4 text-xs">
             <div className="w-12 h-12 rounded-2xl bg-[var(--accent-fill)]/20 border border-[var(--accent)] flex items-center justify-center text-[var(--accent)] mx-auto extrude-sm">
@@ -887,12 +914,12 @@ export function CustomerHomeClient({
 
             <div className="text-center space-y-1.5">
               <h3 className="text-sm font-bold text-[var(--text)]">
-                Enable Location to Find Shops Nearby
+                Locate Nearby Xerox &amp; Print Counters
               </h3>
               <p className="text-[var(--text-muted)] leading-relaxed">
-                PrintSafe locates live xerox and copy shops within walking
-                distance of you. Your location is used only in your browser and
-                is never saved to our servers.
+                PrintSafe finds verified print shops nearest to your current
+                location. Your coordinates are used only in your browser and are
+                never stored on our servers.
               </p>
             </div>
 
@@ -902,7 +929,8 @@ export function CustomerHomeClient({
               </div>
             )}
 
-            <div className="space-y-2 pt-2">
+            <div className="space-y-2.5 pt-2">
+              {/* Primary GPS button */}
               <Button3D
                 variant="primary"
                 size="md"
@@ -915,29 +943,36 @@ export function CustomerHomeClient({
                 ) : (
                   <Compass className="w-4 h-4" />
                 )}
-                {isLocating ? "Getting Location..." : "Share My Location"}
+                {isLocating
+                  ? "Detecting Coordinates..."
+                  : "Use My GPS Location"}
               </Button3D>
 
+              {/* Default Bangalore button */}
               <Button3D
                 variant="secondary"
                 size="sm"
                 onClick={() => {
                   setShowLocationModal(false);
-                  const defaultLoc = {
-                    ...DEFAULT_CENTER,
-                    name: "Bangalore Central",
-                  };
+                  setDismissLocationBanner(true);
+                  const defaultLoc = DEFAULT_CENTER;
                   setUserLocation(defaultLoc);
+                  try {
+                    localStorage.setItem(
+                      STORAGE_KEY,
+                      JSON.stringify(defaultLoc)
+                    );
+                  } catch {}
                 }}
                 className="w-full"
               >
-                Continue with Default Area
+                Use Bangalore Central (Default)
               </Button3D>
             </div>
           </div>
         </Modal>
 
-        {/* Paper Footprint Tree Modal (Phase 14) */}
+        {/* Paper Footprint Tree Modal (Minimal Clean SVG) */}
         <Modal
           isOpen={showTreeModal}
           onClose={() => setShowTreeModal(false)}
@@ -970,7 +1005,7 @@ function ShopListItemCard({
   return (
     <Card3D
       onClick={onSelect}
-      className={`p-3.5 cursor-pointer transition-all border ${
+      className={`p-3 cursor-pointer transition-all border ${
         isSelected
           ? "border-[var(--accent)] bg-[var(--surface-2)] shadow-md"
           : "border-[var(--border)] hover:border-[var(--accent)]/50"
@@ -990,7 +1025,7 @@ function ShopListItemCard({
         </Badge>
       </div>
 
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--border)] text-[11px]">
+      <div className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--border)] text-[10px]">
         <span className="text-[var(--text-muted)] font-mono">
           {formatDistance(shop.distanceMeters)}
         </span>

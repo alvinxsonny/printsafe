@@ -13,13 +13,16 @@ import { cn } from "@/lib/utils";
 export interface CustomerShellProps {
   children: React.ReactNode;
   userAlias?: string;
+  fullBleed?: boolean;
 }
 
 export function CustomerShell({
   children,
   userAlias = "Customer (Guest)",
+  fullBleed = false,
 }: CustomerShellProps) {
   const pathname = usePathname();
+  const isFullBleed = fullBleed || pathname === "/app";
 
   const navItems = [
     { label: "Map", href: "/app", icon: MapPin },
@@ -29,10 +32,22 @@ export function CustomerShell({
   ];
 
   return (
-    <div className="min-h-screen flex flex-col text-[var(--text)] pb-20 md:pb-0">
+    <div
+      className={cn(
+        "flex flex-col text-[var(--text)]",
+        isFullBleed
+          ? "h-screen overflow-hidden pb-16 md:pb-0"
+          : "min-h-screen pb-20 md:pb-0"
+      )}
+    >
       {/* Top Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-40 w-full shrink-0 border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur-md">
+        <div
+          className={cn(
+            "h-16 flex items-center justify-between",
+            isFullBleed ? "w-full px-4 sm:px-6" : "max-w-7xl mx-auto px-4"
+          )}
+        >
           <Link href="/app" className="flex items-center gap-2 group">
             <Logo size={32} />
           </Link>
@@ -76,7 +91,14 @@ export function CustomerShell({
       <ConsentPrompt />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
+      <main
+        className={cn(
+          "flex-1 w-full",
+          isFullBleed
+            ? "h-[calc(100vh-4rem)] overflow-hidden p-0 m-0"
+            : "max-w-7xl mx-auto p-4 md:p-6"
+        )}
+      >
         {children}
       </main>
 

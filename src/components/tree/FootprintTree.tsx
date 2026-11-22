@@ -5,7 +5,7 @@ import { SHEETS_PER_CANOPY_TIER, SHEETS_PER_TREE_APPROX } from "@/config/app";
 import { Badge } from "@/components/ui/Badge";
 import { Card3D } from "@/components/ui/Card3D";
 import { Button3D } from "@/components/ui/Button3D";
-import { Sparkles, Award } from "lucide-react";
+import { Sparkles, Award, TreePine } from "lucide-react";
 
 export interface FootprintTreeProps {
   sheetsPrintedTotal: number;
@@ -608,8 +608,8 @@ export function FootprintTreeCard({
     <Card3D className={`p-5 bg-[var(--surface)] ${className}`}>
       <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] mb-4">
         <div className="flex items-center gap-2">
-          <span className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-sm">
-            🌳
+          <span className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-[var(--accent)]">
+            <TreePine className="w-4 h-4" />
           </span>
           <div>
             <h3 className="text-xs font-extrabold uppercase tracking-wider text-[var(--text)]">

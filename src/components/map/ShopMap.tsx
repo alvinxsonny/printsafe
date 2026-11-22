@@ -65,6 +65,11 @@ export default function ShopMap({
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
+    let resizeObserver: ResizeObserver | null = null;
+    let t1: NodeJS.Timeout;
+    let t2: NodeJS.Timeout;
+    let t3: NodeJS.Timeout;
+
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
         center: initialCenterRef.current,
@@ -82,9 +87,25 @@ export default function ShopMap({
       const markersLayer = L.layerGroup().addTo(map);
       markersLayerRef.current = markersLayer;
       mapInstanceRef.current = map;
+
+      // Invalidate size on container dimension change to eliminate tile glitching
+      resizeObserver = new ResizeObserver(() => {
+        map.invalidateSize();
+      });
+      resizeObserver.observe(mapContainerRef.current);
+
+      t1 = setTimeout(() => map.invalidateSize(), 50);
+      t2 = setTimeout(() => map.invalidateSize(), 200);
+      t3 = setTimeout(() => map.invalidateSize(), 600);
     }
 
     return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -181,8 +202,8 @@ export default function ShopMap({
   }, [selectedShopId, shops]);
 
   return (
-    <div className={`relative ${className}`}>
-      <div ref={mapContainerRef} className="w-full h-full min-h-[400px]" />
+    <div className={`relative w-full h-full overflow-hidden ${className}`}>
+      <div ref={mapContainerRef} className="w-full h-full" />
     </div>
   );
 }
