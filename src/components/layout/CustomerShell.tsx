@@ -86,7 +86,7 @@ export function CustomerShell({
             <ThemeToggle />
             <button
               onClick={() => void performLogout()}
-              className="h-8 px-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] hover:border-red-500 hover:text-red-500 text-xs font-bold text-[var(--text-muted)] flex items-center gap-1.5 transition-colors"
+              className="h-9 px-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-red-500 hover:border-red-500 hover:bg-[var(--surface)] text-xs font-bold flex items-center gap-1.5 transition-all duration-150 select-none cursor-pointer"
               title="Log Out of PrintSafe"
             >
               <LogOut className="w-3.5 h-3.5" />

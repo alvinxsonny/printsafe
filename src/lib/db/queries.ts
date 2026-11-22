@@ -201,9 +201,10 @@ export interface NearbyShopDetail {
   longitude: number | null;
   distanceMeters: number;
   isLive: boolean;
-  capacityState: "normal" | "busy" | "at_capacity";
+  capacityState: "normal" | "busy" | "at_capacity" | "walk_in_only";
   hours: { weekday: number; opens: string; closes: string }[];
   phone: string | null;
+  hasJoinedPrintSafe?: boolean;
 }
 
 /**
@@ -393,6 +394,7 @@ export async function findNearbyShops(params: {
       capacityState,
       hours: shopHoursList,
       phone: row.showPhone ? row.contactPhone : null,
+      hasJoinedPrintSafe: true,
     });
   }
 

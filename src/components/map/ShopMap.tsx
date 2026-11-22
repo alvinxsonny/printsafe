@@ -35,10 +35,14 @@ const CLOSED_PIN_HTML = (isSelected: boolean) => `
   </div>
 `;
 
-const USER_LOCATION_HTML = `
-  <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-    <div class="animate-user-pulse" style="position: absolute; width: 28px; height: 28px; border-radius: 9999px; background-color: rgba(37, 99, 235, 0.35);"></div>
-    <div style="position: relative; width: 16px; height: 16px; background-color: #2563EB; border: 3px solid #FFFFFF; border-radius: 9999px; box-shadow: 0 2px 8px rgba(0,0,0,0.45);"></div>
+const UNCLAIMED_PIN_HTML = (isSelected: boolean) => `
+  <div style="position: relative; width: ${isSelected ? "38px" : "32px"}; height: ${isSelected ? "46px" : "40px"}; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.25)); cursor: pointer;">
+    <svg width="${isSelected ? "38" : "32"}" height="${isSelected ? "46" : "40"}" viewBox="0 0 36 44" fill="none">
+      <path d="M18 0C8.05888 0 0 8.05888 0 18C0 29.5 18 44 18 44C18 44 36 29.5 36 18C36 8.05888 27.9411 0 18 0Z" fill="${isSelected ? "#B45309" : "#D97706"}"/>
+      <path d="M18 2C9.16344 2 2 9.16344 2 18C2 28.2 18 41.5 18 41.5C18 41.5 34 28.2 34 18C34 9.16344 26.8366 2 18 2Z" fill="${isSelected ? "#FCD34D" : "#F59E0B"}"/>
+      <circle cx="18" cy="17" r="6" fill="#18181B"/>
+      <text x="18" y="21" font-size="11" font-weight="900" text-anchor="middle" fill="#F59E0B">?</text>
+    </svg>
   </div>
 `;
 
@@ -52,10 +56,11 @@ export default function ShopMap({
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
-  const userMarkerRef = useRef<L.Marker | null>(null);
+  const userPulseRef = useRef<L.Circle | null>(null);
+  const userDotRef = useRef<L.CircleMarker | null>(null);
   const onSelectRef = useRef(onSelectShop);
   const initialCenterRef = useRef<[number, number]>(
-    userLocation ? [userLocation.lat, userLocation.lng] : [12.9716, 77.5946] // Bangalore default
+    userLocation ? [userLocation.lat, userLocation.lng] : [12.9716, 77.5946]
   );
 
   useEffect(() => {
@@ -74,7 +79,7 @@ export default function ShopMap({
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
         center: initialCenterRef.current,
-        zoom: 14,
+        zoom: 15,
         zoomControl: true,
         attributionControl: true,
       });
@@ -114,40 +119,66 @@ export default function ShopMap({
     };
   }, []);
 
-  // 2. Update User Location Marker & Viewport
+  // 2. High-Visibility User Location Blue Marker & Centering
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
     if (userLocation) {
-      const userIcon = L.divIcon({
-        className: "custom-user-pin",
-        html: USER_LOCATION_HTML,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-      });
-
-      if (!userMarkerRef.current) {
-        userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], {
-          icon: userIcon,
-          zIndexOffset: 1000,
+      // 1) Outer soft accuracy radar pulse ring
+      if (!userPulseRef.current) {
+        userPulseRef.current = L.circle([userLocation.lat, userLocation.lng], {
+          radius: 40,
+          color: "#2563EB",
+          fillColor: "#3B82F6",
+          fillOpacity: 0.2,
+          weight: 1.5,
         }).addTo(map);
       } else {
-        userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+        userPulseRef.current.setLatLng([userLocation.lat, userLocation.lng]);
       }
 
-      // Smoothly pan & center map on the user's GPS coordinates
+      // 2) Inner vibrant blue dot with white border & permanent label
+      if (!userDotRef.current) {
+        const dot = L.circleMarker([userLocation.lat, userLocation.lng], {
+          radius: 10,
+          fillColor: "#2563EB",
+          fillOpacity: 1,
+          color: "#FFFFFF",
+          weight: 3.5,
+          opacity: 1,
+        }).addTo(map);
+
+        dot.bindTooltip("You are here", {
+          permanent: true,
+          direction: "top",
+          offset: [0, -12],
+          className: "user-location-tooltip",
+        });
+
+        userDotRef.current = dot;
+      } else {
+        userDotRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+      }
+
+      // Smoothly pan & center map on the user's exact coordinates
       map.flyTo([userLocation.lat, userLocation.lng], 15, {
         animate: true,
         duration: 0.8,
       });
-    } else if (userMarkerRef.current) {
-      userMarkerRef.current.remove();
-      userMarkerRef.current = null;
+    } else {
+      if (userPulseRef.current) {
+        userPulseRef.current.remove();
+        userPulseRef.current = null;
+      }
+      if (userDotRef.current) {
+        userDotRef.current.remove();
+        userDotRef.current = null;
+      }
     }
   }, [userLocation]);
 
-  // 3. Render Shop Pins & Clusters
+  // 3. Render Shop Pins & Clusters (PrintSafe Partners vs Unclaimed Counters)
   useEffect(() => {
     const map = mapInstanceRef.current;
     const layer = markersLayerRef.current;
@@ -155,18 +186,17 @@ export default function ShopMap({
 
     layer.clearLayers();
 
-    const bounds = L.latLngBounds([]);
-    if (userLocation) {
-      bounds.extend([userLocation.lat, userLocation.lng]);
-    }
-
     for (const shop of shops) {
       if (shop.latitude == null || shop.longitude == null) continue;
 
       const isSelected = shop.id === selectedShopId;
-      const html = shop.isLive
-        ? LIVE_PIN_HTML(isSelected)
-        : CLOSED_PIN_HTML(isSelected);
+      const isPartner = shop.hasJoinedPrintSafe !== false;
+
+      const html = !isPartner
+        ? UNCLAIMED_PIN_HTML(isSelected)
+        : shop.isLive
+          ? LIVE_PIN_HTML(isSelected)
+          : CLOSED_PIN_HTML(isSelected);
 
       const pinIcon = L.divIcon({
         className: `custom-shop-pin-${shop.id}`,
@@ -177,22 +207,29 @@ export default function ShopMap({
 
       const marker = L.marker([shop.latitude, shop.longitude], {
         icon: pinIcon,
-        zIndexOffset: isSelected ? 500 : shop.isLive ? 200 : 100,
+        zIndexOffset: isSelected
+          ? 500
+          : isPartner
+            ? shop.isLive
+              ? 300
+              : 150
+            : 100,
       });
+
+      marker.bindTooltip(
+        isPartner
+          ? `<strong>${shop.name}</strong><br/><span style="color:#10B981;">✓ PrintSafe Partner</span>`
+          : `<strong>${shop.name}</strong><br/><span style="color:#F59E0B;">Not on PrintSafe yet</span>`,
+        { direction: "top", offset: [0, -22] }
+      );
 
       marker.on("click", () => {
         onSelectRef.current(shop);
       });
 
       marker.addTo(layer);
-      bounds.extend([shop.latitude, shop.longitude]);
     }
-
-    // Adjust map viewport to show pins on first load or when user moves
-    if (bounds.isValid() && shops.length > 0 && !selectedShopId) {
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
-    }
-  }, [shops, selectedShopId, userLocation]);
+  }, [shops, selectedShopId]);
 
   // 4. Pan to Selected Shop
   useEffect(() => {
