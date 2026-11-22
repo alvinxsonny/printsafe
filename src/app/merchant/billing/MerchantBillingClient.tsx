@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   CreditCard,
   CheckCircle2,
@@ -8,9 +8,15 @@ import {
   Users,
   Zap,
   Loader2,
+  Receipt,
+  Printer,
+  FileCheck,
+  AlertCircle,
+  X,
 } from "lucide-react";
 import { MerchantShell } from "@/components/layout/MerchantShell";
 import { Card3D, Button3D, Badge } from "@/components/ui";
+import { openRazorpayCheckout } from "@/lib/payments/client";
 
 interface BillingData {
   shop: {
@@ -45,11 +51,26 @@ interface BillingData {
   };
 }
 
+interface PaymentHistoryItem {
+  id: string;
+  kind: string;
+  refId: string;
+  amountPaise: number;
+  amountRupees: string;
+  status: "created" | "paid" | "failed" | "refunded";
+  razorpayOrderId: string | null;
+  razorpayPaymentId: string | null;
+  receiptNumber: string;
+  createdAt: string;
+}
+
 const AVAILABLE_PLANS = [
   {
     code: "starter",
+    planId: "merchant_starter",
     name: "Starter",
     price: "₹299",
+    pricePaise: 29900,
     period: "/month",
     description:
       "Ideal for small Xerox shops starting with zero-trust digital orders.",
@@ -67,8 +88,10 @@ const AVAILABLE_PLANS = [
   },
   {
     code: "growth",
+    planId: "merchant_growth",
     name: "Growth",
     price: "₹599",
+    pricePaise: 59900,
     period: "/month",
     description:
       "Best for busy neighbourhood photocopy shops near colleges & courts.",
@@ -88,14 +111,16 @@ const AVAILABLE_PLANS = [
   },
   {
     code: "pro",
+    planId: "merchant_pro",
     name: "Pro Volume",
-    price: "₹1,199",
+    price: "₹999",
+    pricePaise: 99900,
     period: "/month",
     description:
       "For high-volume printing hubs, blueprint centers & multi-operator stores.",
     limits: {
-      jobs: "2,000 jobs / month",
-      customers: "1,000 unique customers",
+      jobs: "1,500 jobs / month",
+      customers: "Unlimited customers",
       devices: "5 counter terminals",
     },
     features: [
@@ -110,28 +135,150 @@ const AVAILABLE_PLANS = [
 
 export function MerchantBillingClient() {
   const [data, setData] = useState<BillingData | null>(null);
+  const [history, setHistory] = useState<PaymentHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessingPlan, setIsProcessingPlan] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [activeReceipt, setActiveReceipt] = useState<PaymentHistoryItem | null>(
+    null
+  );
+
+  const loadData = useCallback(async () => {
+    try {
+      const [resDashboard, resHistory] = await Promise.all([
+        fetch("/api/merchant/dashboard"),
+        fetch("/api/payments/history"),
+      ]);
+
+      if (resDashboard.ok) {
+        const json = await resDashboard.json();
+        setData(json);
+      }
+      if (resHistory.ok) {
+        const jsonHistory = await resHistory.json();
+        setHistory(jsonHistory.payments || []);
+      }
+    } catch (err) {
+      console.warn("Failed to load billing:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let ignore = false;
-    async function loadData() {
+    async function fetchBilling() {
       try {
-        const res = await fetch("/api/merchant/dashboard");
-        if (res.ok && !ignore) {
-          const json = await res.json();
-          setData(json);
+        const [resDashboard, resHistory] = await Promise.all([
+          fetch("/api/merchant/dashboard"),
+          fetch("/api/payments/history"),
+        ]);
+        if (!ignore) {
+          if (resDashboard.ok) {
+            const json = await resDashboard.json();
+            setData(json);
+          }
+          if (resHistory.ok) {
+            const jsonHistory = await resHistory.json();
+            setHistory(jsonHistory.payments || []);
+          }
         }
       } catch (err) {
         console.warn("Failed to load billing:", err);
       } finally {
-        if (!ignore) setIsLoading(false);
+        if (!ignore) {
+          setIsLoading(false);
+        }
       }
     }
-    void loadData();
+    void fetchBilling();
     return () => {
       ignore = true;
     };
   }, []);
+
+  async function handleSelectPlan(planId: string, planName: string) {
+    setIsProcessingPlan(planId);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      // 1. Create Order Server-Side
+      const resOrder = await fetch("/api/payments/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "merchant_plan",
+          refId: planId,
+        }),
+      });
+
+      const orderData = await resOrder.json();
+      if (!resOrder.ok) {
+        throw new Error(
+          orderData.error || "Failed to initiate subscription order."
+        );
+      }
+
+      // 2. Open Razorpay Checkout Modal
+      await openRazorpayCheckout({
+        key: orderData.keyId,
+        amount: orderData.amountPaise,
+        currency: orderData.currency || "INR",
+        name: "PrintSafe Merchant",
+        description: `${planName} Subscription (30 Days)`,
+        order_id: orderData.orderId,
+        handler: async (response) => {
+          // 3. Verify Payment Server-Side
+          try {
+            const resVerify = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await resVerify.json();
+            if (!resVerify.ok) {
+              throw new Error(
+                verifyData.error || "Payment verification failed."
+              );
+            }
+
+            setSuccessMessage(
+              `Successfully upgraded to ${planName}! Your subscription is active for 30 days.`
+            );
+            await loadData();
+          } catch (err) {
+            setErrorMessage(
+              err instanceof Error
+                ? err.message
+                : "Payment verification failed."
+            );
+          } finally {
+            setIsProcessingPlan(null);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsProcessingPlan(null);
+          },
+        },
+        theme: {
+          color: "#E5A93C", // PrintSafe Accent
+        },
+      });
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : "Subscription checkout error."
+      );
+      setIsProcessingPlan(null);
+    }
+  }
 
   if (isLoading || !data) {
     return (
@@ -147,7 +294,6 @@ export function MerchantBillingClient() {
   }
 
   const { shop, subscription, plan, usage } = data;
-
   const jobsPercent = Math.min(
     100,
     Math.round((usage.monthJobs / (usage.jobsLimit || 1)) * 100)
@@ -171,6 +317,37 @@ export function MerchantBillingClient() {
           </p>
         </div>
 
+        {/* Alerts */}
+        {errorMessage && (
+          <div className="p-4 rounded-xl bg-[var(--danger-fill)]/15 border border-[var(--danger)] text-xs text-[var(--danger)] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="text-[var(--text-muted)] hover:text-[var(--text)]"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="p-4 rounded-xl bg-emerald-500/15 border border-emerald-500 text-xs text-emerald-400 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <FileCheck className="w-4 h-4 shrink-0" />
+              <span>{successMessage}</span>
+            </div>
+            <button
+              onClick={() => setSuccessMessage(null)}
+              className="text-[var(--text-muted)] hover:text-[var(--text)]"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Current Active Plan Overview */}
         <Card3D className="p-6 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
@@ -185,10 +362,14 @@ export function MerchantBillingClient() {
                   </h2>
                   <Badge
                     variant={
-                      subscription?.status === "active" ? "approved" : "live"
+                      subscription?.status === "active"
+                        ? "approved"
+                        : subscription?.status === "grace"
+                          ? "pending"
+                          : "live"
                     }
                   >
-                    {subscription?.status?.toUpperCase() || "30-DAY TRIAL"}
+                    {subscription?.status?.toUpperCase() || "TRIAL"}
                   </Badge>
                 </div>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">
@@ -203,7 +384,7 @@ export function MerchantBillingClient() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Badge variant="neutral">Auto-Renews</Badge>
+              <Badge variant="neutral">Auto-Renewal (3-day grace)</Badge>
             </div>
           </div>
 
@@ -215,7 +396,7 @@ export function MerchantBillingClient() {
                   <TrendingUp className="w-4 h-4 text-[var(--accent)]" />
                   Monthly Job Volume
                 </span>
-                <span className="font-mono font-bold text-[var(--text)]">
+                <span className="font-mono font-bold text-[var(--text)] tabular-nums">
                   {usage.monthJobs} / {usage.jobsLimit}
                 </span>
               </div>
@@ -242,7 +423,7 @@ export function MerchantBillingClient() {
                   <Users className="w-4 h-4 text-[var(--accent)]" />
                   Unique Customer Reach
                 </span>
-                <span className="font-mono font-bold text-[var(--text)]">
+                <span className="font-mono font-bold text-[var(--text)] tabular-nums">
                   {usage.monthUniqueCustomers} / {usage.customersLimit}
                 </span>
               </div>
@@ -272,7 +453,8 @@ export function MerchantBillingClient() {
               Upgrade or Change Tier
             </h3>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              Scale your print job volume as your customer base expands.
+              Scale your print job volume as your customer base expands. Instant
+              test activation with Razorpay.
             </p>
           </div>
 
@@ -280,6 +462,7 @@ export function MerchantBillingClient() {
             {AVAILABLE_PLANS.map((p) => {
               const isCurrent =
                 (plan?.code || "growth").toLowerCase() === p.code.toLowerCase();
+              const isProcessing = isProcessingPlan === p.planId;
 
               return (
                 <Card3D
@@ -307,7 +490,7 @@ export function MerchantBillingClient() {
                     </div>
 
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-black font-mono text-[var(--text)]">
+                      <span className="text-3xl font-black font-mono text-[var(--text)] tabular-nums">
                         {p.price}
                       </span>
                       <span className="text-xs text-[var(--text-muted)] font-medium">
@@ -353,14 +536,18 @@ export function MerchantBillingClient() {
                       <Button3D
                         variant={p.popular ? "primary" : "secondary"}
                         size="md"
-                        onClick={() =>
-                          alert(
-                            "Razorpay automated billing integration is connected in Phase 12. Your trial remains fully active!"
-                          )
-                        }
-                        className="w-full text-xs font-bold"
+                        disabled={isProcessingPlan !== null}
+                        onClick={() => handleSelectPlan(p.planId, p.name)}
+                        className="w-full text-xs font-bold flex items-center justify-center gap-2"
                       >
-                        Select {p.name}
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Processing...</span>
+                          </>
+                        ) : (
+                          <span>Select {p.name}</span>
+                        )}
                       </Button3D>
                     )}
                   </div>
@@ -369,6 +556,184 @@ export function MerchantBillingClient() {
             })}
           </div>
         </div>
+
+        {/* Invoices & Payment History Section */}
+        <div className="space-y-4 pt-6 border-t border-[var(--border)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-extrabold tracking-tight flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-[var(--accent)]" />
+                Payment History &amp; Receipts
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                All charges and subscription payments in INR with downloadable
+                receipts.
+              </p>
+            </div>
+          </div>
+
+          <Card3D className="overflow-hidden">
+            {history.length === 0 ? (
+              <div className="p-8 text-center text-xs text-[var(--text-muted)]">
+                No past transactions recorded yet. When you upgrade your plan,
+                official receipts will appear here.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[var(--surface-2)] border-b border-[var(--border)] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                    <tr>
+                      <th className="py-3 px-4">Receipt</th>
+                      <th className="py-3 px-4">Date</th>
+                      <th className="py-3 px-4">Description</th>
+                      <th className="py-3 px-4 text-right">Amount</th>
+                      <th className="py-3 px-4 text-center">Status</th>
+                      <th className="py-3 px-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)]">
+                    {history.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-[var(--surface-2)]/50 transition-colors"
+                      >
+                        <td className="py-3 px-4 font-mono font-bold text-[var(--text)]">
+                          {item.receiptNumber}
+                        </td>
+                        <td className="py-3 px-4 text-[var(--text-muted)]">
+                          {new Date(item.createdAt).toLocaleDateString([], {
+                            dateStyle: "medium",
+                          })}
+                        </td>
+                        <td className="py-3 px-4 text-[var(--text)] font-medium">
+                          {item.kind === "merchant_plan"
+                            ? "Merchant Plan Subscription"
+                            : item.kind === "job"
+                              ? "Print Job Order"
+                              : "Subscription Plan"}
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-[var(--text)] text-right tabular-nums">
+                          ₹{item.amountRupees}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <Badge
+                            variant={
+                              item.status === "paid"
+                                ? "approved"
+                                : item.status === "refunded"
+                                  ? "live"
+                                  : "neutral"
+                            }
+                            size="sm"
+                          >
+                            {item.status.toUpperCase()}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            onClick={() => setActiveReceipt(item)}
+                            className="text-[var(--accent)] hover:underline font-semibold"
+                          >
+                            View Receipt
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card3D>
+        </div>
+
+        {/* Modal: View Receipt */}
+        {activeReceipt && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <Card3D className="max-w-md w-full p-6 space-y-6 relative bg-[var(--surface)]">
+              <div className="flex items-center justify-between pb-4 border-b border-[var(--border)]">
+                <div className="flex items-center gap-2">
+                  <Receipt className="w-5 h-5 text-[var(--accent)]" />
+                  <h3 className="text-base font-extrabold text-[var(--text)]">
+                    Payment Receipt
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setActiveReceipt(null)}
+                  className="text-[var(--text-muted)] hover:text-[var(--text)]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-[var(--text-muted)]">
+                    Receipt Number
+                  </span>
+                  <span className="font-mono font-bold text-[var(--text)]">
+                    {activeReceipt.receiptNumber}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--text-muted)]">
+                    Date &amp; Time
+                  </span>
+                  <span className="text-[var(--text)]">
+                    {new Date(activeReceipt.createdAt).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--text-muted)]">Order ID</span>
+                  <span className="font-mono text-[var(--text-muted)]">
+                    {activeReceipt.razorpayOrderId || "N/A"}
+                  </span>
+                </div>
+                {activeReceipt.razorpayPaymentId && (
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-muted)]">Payment ID</span>
+                    <span className="font-mono text-[var(--text-muted)]">
+                      {activeReceipt.razorpayPaymentId}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-[var(--text-muted)]">Status</span>
+                  <span className="font-bold uppercase text-emerald-400">
+                    {activeReceipt.status}
+                  </span>
+                </div>
+                <div className="pt-3 border-t border-[var(--border)] flex justify-between items-baseline">
+                  <span className="text-sm font-bold text-[var(--text)]">
+                    Total Paid
+                  </span>
+                  <span className="text-xl font-mono font-black text-[var(--text)] tabular-nums">
+                    ₹{activeReceipt.amountRupees}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <Button3D
+                  variant="primary"
+                  size="sm"
+                  onClick={() => window.print()}
+                  className="w-full flex items-center justify-center gap-2"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print Receipt</span>
+                </Button3D>
+                <Button3D
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setActiveReceipt(null)}
+                  className="w-full"
+                >
+                  Close
+                </Button3D>
+              </div>
+            </Card3D>
+          </div>
+        )}
       </div>
     </MerchantShell>
   );

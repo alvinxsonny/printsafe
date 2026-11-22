@@ -44,7 +44,7 @@ Start a fresh chat for each phase if the agent gets confused. Commit to git afte
 - [x] Phase 9: Print requests (customer side)
 - [x] Phase 10: Merchant dashboard (live toggle, prices, queue)
 - [x] Phase 11: Secure viewer and print
-- [ ] Phase 12: Payments (Razorpay) and plan limits
+- [x] Phase 12: Payments (Razorpay) and plan limits
 - [ ] Phase 13: Notifications
 - [ ] Phase 14: Paper footprint tree and 3D polish
 - [ ] Phase 15: Privacy, compliance and security hardening

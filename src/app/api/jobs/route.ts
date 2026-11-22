@@ -18,6 +18,7 @@ import { isShopLive } from "@/lib/db/queries";
 import { decryptPasscode } from "@/lib/jobs/passcode";
 import { isJobExpired } from "@/lib/jobs/machine";
 import { REQUEST_EXPIRY_MINUTES } from "@/config/app";
+import { canAcceptJob } from "@/lib/payments";
 
 /**
  * GET /api/jobs: Returns customer's print jobs history and active requests.
@@ -199,7 +200,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { shop, subscription, planLimits } = shopRows[0];
+    const { shop, subscription } = shopRows[0];
 
     if (shop.status !== "approved") {
       return NextResponse.json(
@@ -238,6 +239,18 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Verify Shop Capacity & Plan Caps
+    const limitCheck = await canAcceptJob(shopId);
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          error:
+            limitCheck.reason ||
+            "This shop has reached its capacity and cannot accept new jobs.",
+        },
+        { status: 403 }
+      );
+    }
+
     const activeJobsCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(printJobs)
@@ -256,29 +269,6 @@ export async function POST(req: NextRequest) {
         },
         { status: 429 }
       );
-    }
-
-    // Check monthly cap from subscription period
-    if (planLimits?.jobs_per_month) {
-      const periodJobsCount = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(printJobs)
-        .where(
-          and(
-            eq(printJobs.shopId, shopId),
-            sql`${printJobs.requestedAt} >= ${subscription.periodStart}`
-          )
-        );
-
-      if (Number(periodJobsCount[0]?.count || 0) >= planLimits.jobs_per_month) {
-        return NextResponse.json(
-          {
-            error:
-              "This shop has reached its order capacity for the billing period and is not accepting new requests.",
-          },
-          { status: 403 }
-        );
-      }
     }
 
     // 5. Server Recomputes Job Quote (Never trust client prices)

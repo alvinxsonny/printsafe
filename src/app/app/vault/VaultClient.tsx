@@ -14,9 +14,11 @@ import {
   HardDrive,
   Eye,
   Sliders,
+  Zap,
 } from "lucide-react";
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Card3D, Button3D, Badge, Modal, Input } from "@/components/ui";
+import { openRazorpayCheckout } from "@/lib/payments/client";
 
 interface VaultDocument {
   id: string;
@@ -69,6 +71,7 @@ export function VaultClient() {
   // Delete modal state
   const [deletingDoc, setDeletingDoc] = useState<VaultDocument | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
   const [currentTime, setCurrentTime] = useState<number | null>(null);
 
   async function loadVault() {
@@ -83,6 +86,74 @@ export function VaultClient() {
       console.warn("Failed to load vault:", err);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleUpgradePlus() {
+    setIsUpgrading(true);
+    setErrorMessage(null);
+    try {
+      const resOrder = await fetch("/api/payments/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "customer_plan",
+          refId: "customer_plus",
+        }),
+      });
+
+      const orderData = await resOrder.json();
+      if (!resOrder.ok) {
+        throw new Error(orderData.error || "Failed to initiate Plus upgrade.");
+      }
+
+      await openRazorpayCheckout({
+        key: orderData.keyId,
+        amount: orderData.amountPaise,
+        currency: orderData.currency || "INR",
+        name: "PrintSafe Plus",
+        description: "Customer Plus Plan Upgrade (₹49 / 30 Days)",
+        order_id: orderData.orderId,
+        handler: async (response) => {
+          try {
+            const resVerify = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await resVerify.json();
+            if (!resVerify.ok) {
+              throw new Error(
+                verifyData.error || "Payment verification failed."
+              );
+            }
+
+            await loadVault();
+          } catch (vErr) {
+            setErrorMessage(
+              vErr instanceof Error ? vErr.message : "Verification failed."
+            );
+          } finally {
+            setIsUpgrading(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsUpgrading(false);
+          },
+        },
+        theme: {
+          color: "#E5A93C",
+        },
+      });
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Upgrade failed.");
+      setIsUpgrading(false);
     }
   }
 
@@ -320,21 +391,45 @@ export function VaultClient() {
         {/* Quotas & Limits Overview Banner */}
         {quota && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card3D className="p-4 flex items-center justify-between">
-              <div className="space-y-0.5">
-                <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                  Subscription Tier
-                </span>
-                <div className="text-base font-extrabold text-[var(--text)]">
-                  {quota.planName} Tier
+            <Card3D className="p-4 flex flex-col justify-between gap-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                    Subscription Tier
+                  </span>
+                  <div className="text-base font-extrabold text-[var(--text)]">
+                    {quota.planName} Tier
+                  </div>
                 </div>
+                <Badge
+                  variant={quota.planName === "Plus" ? "live" : "neutral"}
+                  size="sm"
+                >
+                  Active
+                </Badge>
               </div>
-              <Badge
-                variant={quota.planName === "Plus" ? "live" : "neutral"}
-                size="sm"
-              >
-                Active
-              </Badge>
+
+              {quota.planName !== "Plus" && (
+                <Button3D
+                  variant="primary"
+                  size="sm"
+                  disabled={isUpgrading}
+                  onClick={handleUpgradePlus}
+                  className="w-full text-xs font-bold flex items-center justify-center gap-1.5"
+                >
+                  {isUpgrading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Upgrading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>Upgrade to Plus (₹49/mo)</span>
+                    </>
+                  )}
+                </Button3D>
+              )}
             </Card3D>
 
             <Card3D className="p-4 space-y-2">

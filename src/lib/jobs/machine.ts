@@ -14,6 +14,7 @@ import {
 } from "@/config/app";
 import { generatePasscode, encryptPasscode } from "./passcode";
 import { deleteObject } from "@/lib/storage/client";
+import { processJobRefund } from "@/lib/payments/refund";
 
 export type PrintJobStatus =
   | "requested"
@@ -101,18 +102,25 @@ export async function transitionJob(params: {
   // 2. State Machine Transitions
   switch (action) {
     case "cancel": {
-      if (job.status !== "requested") {
+      const cancellableStatuses = ["requested", "awaiting_payment", "paid"];
+      if (!cancellableStatuses.includes(job.status)) {
         return {
           success: false,
           error:
-            "Only requested jobs can be cancelled before merchant acceptance.",
+            "Only requested, awaiting payment, or paid (unprinted) jobs can be cancelled.",
         };
       }
       if (actor.role !== "customer" && actor.role !== "admin") {
         return {
           success: false,
-          error: "Only the customer can cancel the job.",
+          error: "Only the customer or an admin can cancel the job.",
         };
+      }
+      if (job.status === "paid") {
+        await processJobRefund(
+          jobId,
+          reason || "Job cancelled by customer before printing"
+        );
       }
       newStatus = "cancelled";
       updates.status = "cancelled";
@@ -155,7 +163,8 @@ export async function transitionJob(params: {
     }
 
     case "reject": {
-      if (job.status !== "requested") {
+      const rejectableStatuses = ["requested", "awaiting_payment", "paid"];
+      if (!rejectableStatuses.includes(job.status)) {
         return {
           success: false,
           error: `Cannot reject job currently in '${job.status}' status.`,
@@ -166,6 +175,12 @@ export async function transitionJob(params: {
           success: false,
           error: "Only the merchant can reject the job.",
         };
+      }
+      if (job.status === "paid") {
+        await processJobRefund(
+          jobId,
+          reason || "Merchant rejected job after payment"
+        );
       }
       newStatus = "rejected";
       updates.status = "rejected";
@@ -270,11 +285,15 @@ export async function transitionJob(params: {
     }
 
     case "expire": {
-      if (job.status !== "requested") {
+      const expirableStatuses = ["requested", "awaiting_payment", "paid"];
+      if (!expirableStatuses.includes(job.status)) {
         return {
           success: false,
           error: `Cannot expire job in '${job.status}' status.`,
         };
+      }
+      if (job.status === "paid") {
+        await processJobRefund(jobId, "Job expired without being printed");
       }
       newStatus = "expired";
       updates.status = "expired";

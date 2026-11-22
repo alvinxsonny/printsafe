@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq, and, ne, gte, sql } from "drizzle-orm";
 import { getServerSession } from "@/lib/auth/guards";
 import { db } from "@/lib/db/client";
-import { documents, customerProfiles, plans } from "@/lib/db/schema";
+import { documents } from "@/lib/db/schema";
 import { presignPut } from "@/lib/storage/client";
 import { generateDataKey, wrapDataKey } from "@/lib/storage/crypto";
 import { MAX_UPLOAD_MB, DEFAULT_RETENTION_DAYS } from "@/config/app";
+import { canUpload } from "@/lib/payments";
 
 const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",
@@ -63,71 +63,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check Plan & Quota
-    // Defaults: Free tier (10 uploads/mo, 100 MB vault)
-    let maxUploadsPerMonth = 10;
-    let maxVaultBytes = 100 * 1024 * 1024;
-
-    const profileRows = await db
-      .select({
-        planLimits: plans.limits,
-      })
-      .from(customerProfiles)
-      .leftJoin(plans, eq(customerProfiles.planId, plans.id))
-      .where(eq(customerProfiles.userId, session.user.id))
-      .limit(1);
-
-    if (profileRows.length > 0 && profileRows[0].planLimits) {
-      const limits = profileRows[0].planLimits;
-      if (limits.uploads_per_month) {
-        maxUploadsPerMonth = limits.uploads_per_month;
-      }
-      if (limits.vault_mb) {
-        maxVaultBytes = limits.vault_mb * 1024 * 1024;
-      }
-    }
-
-    // 1. Check monthly uploads quota (last 30 days)
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const recentUploads = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(documents)
-      .where(
-        and(
-          eq(documents.ownerId, session.user.id),
-          gte(documents.createdAt, thirtyDaysAgo)
-        )
-      );
-
-    const uploadsCount = Number(recentUploads[0]?.count || 0);
-    if (uploadsCount >= maxUploadsPerMonth) {
+    // Check Plan & Vault Quotas via helper
+    const uploadCheck = await canUpload(session.user.id, sizeBytes);
+    if (!uploadCheck.allowed) {
       return NextResponse.json(
         {
-          error: `Monthly upload quota reached (${uploadsCount}/${maxUploadsPerMonth} uploads used). Upgrade to Plus for 100 uploads/month.`,
-        },
-        { status: 403 }
-      );
-    }
-
-    // 2. Check total vault storage quota
-    const storageSum = await db
-      .select({
-        totalBytes: sql<number>`coalesce(sum(${documents.sizeBytes}), 0)`,
-      })
-      .from(documents)
-      .where(
-        and(
-          eq(documents.ownerId, session.user.id),
-          ne(documents.status, "deleted")
-        )
-      );
-
-    const currentVaultBytes = Number(storageSum[0]?.totalBytes || 0);
-    if (currentVaultBytes + sizeBytes > maxVaultBytes) {
-      const maxMb = Math.round(maxVaultBytes / (1024 * 1024));
-      return NextResponse.json(
-        {
-          error: `Vault storage limit of ${maxMb} MB exceeded. Please delete old documents or upgrade to Plus for 2 GB storage.`,
+          error:
+            uploadCheck.reason || "Upload quota or storage limit exceeded.",
         },
         { status: 403 }
       );

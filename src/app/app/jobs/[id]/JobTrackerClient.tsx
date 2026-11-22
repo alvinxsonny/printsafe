@@ -15,9 +15,12 @@ import {
   CreditCard,
   Loader2,
   ShieldCheck,
+  Receipt,
+  Printer,
 } from "lucide-react";
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Card3D, Button3D, Badge, Modal } from "@/components/ui";
+import { openRazorpayCheckout } from "@/lib/payments/client";
 
 interface JobDetail {
   id: string;
@@ -81,6 +84,8 @@ export function JobTrackerClient({ jobId }: { jobId: string }) {
   const [cancelReason, setCancelReason] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchJobData = useCallback(async () => {
@@ -196,6 +201,81 @@ export function JobTrackerClient({ jobId }: { jobId: string }) {
       setActionError(msg);
     } finally {
       setIsRegenerating(false);
+    }
+  }
+
+  // Handle Razorpay Payment for Far Mode
+  async function handlePayJob() {
+    if (!job) return;
+    setIsPaying(true);
+    setPaymentError(null);
+
+    try {
+      const resOrder = await fetch("/api/payments/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "job",
+          refId: jobId,
+        }),
+      });
+
+      const orderData = await resOrder.json();
+      if (!resOrder.ok) {
+        throw new Error(orderData.error || "Failed to create payment order.");
+      }
+
+      await openRazorpayCheckout({
+        key: orderData.keyId,
+        amount: orderData.amountPaise,
+        currency: orderData.currency || "INR",
+        name: "PrintSafe Print Order",
+        description: `Order #${job.id.slice(-6).toUpperCase()} Payment`,
+        order_id: orderData.orderId,
+        handler: async (response) => {
+          try {
+            const resVerify = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await resVerify.json();
+            if (!resVerify.ok) {
+              throw new Error(
+                verifyData.error || "Payment verification failed."
+              );
+            }
+
+            await fetchJobData();
+          } catch (vErr) {
+            setPaymentError(
+              vErr instanceof Error
+                ? vErr.message
+                : "Payment verification failed."
+            );
+          } finally {
+            setIsPaying(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsPaying(false);
+          },
+        },
+        theme: {
+          color: "#E5A93C",
+        },
+      });
+    } catch (err) {
+      setPaymentError(
+        err instanceof Error ? err.message : "Payment initialization failed."
+      );
+      setIsPaying(false);
     }
   }
 
@@ -510,35 +590,95 @@ export function JobTrackerClient({ jobId }: { jobId: string }) {
           </Card3D>
         )}
 
+        {/* Payment Error Alert */}
+        {paymentError && (
+          <div className="p-4 rounded-xl bg-[var(--danger-fill)]/15 border border-[var(--danger)] text-xs text-[var(--danger)] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{paymentError}</span>
+            </div>
+            <button
+              onClick={() => setPaymentError(null)}
+              className="text-[var(--text-muted)] hover:text-[var(--text)] text-sm font-bold"
+            >
+              &times;
+            </button>
+          </div>
+        )}
+
         {/* Far Mode Payment Banner */}
         {job.mode === "far" && job.status === "awaiting_payment" && (
-          <Card3D className="p-6 bg-[var(--surface)] border-2 border-[var(--info)] space-y-4">
-            <div className="flex items-start justify-between gap-4">
+          <Card3D className="p-6 bg-[var(--surface)] border-2 border-[var(--accent)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-[var(--text)]">
-                  Payment Required to Unlock Queue
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-[var(--text)]">
+                    Payment Required to Unlock Queue
+                  </h3>
+                  <Badge variant="live">Awaiting Payment</Badge>
+                </div>
                 <p className="text-xs text-[var(--text-muted)]">
                   The merchant has accepted your request. Complete payment of ₹
-                  {(job.quotePaise / 100).toFixed(2)} to unlock document
-                  printing.
+                  {(job.quotePaise / 100).toFixed(2)} via Razorpay to release
+                  document for printing.
                 </p>
               </div>
 
               <Button3D
                 variant="primary"
                 size="md"
-                onClick={() => {
-                  alert(
-                    "Razorpay payment integration will be wired in Phase 12. In test mode, jobs can be paid or completed by merchant."
-                  );
-                }}
+                disabled={isPaying}
+                onClick={handlePayJob}
                 className="flex items-center gap-2 text-xs font-bold shrink-0"
               >
-                <CreditCard className="w-4 h-4" />
-                Pay ₹{(job.quotePaise / 100).toFixed(2)}
+                {isPaying ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4" />
+                    <span className="font-mono tabular-nums">
+                      Pay ₹{(job.quotePaise / 100).toFixed(2)}
+                    </span>
+                  </>
+                )}
               </Button3D>
             </div>
+          </Card3D>
+        )}
+
+        {/* Paid Receipt Banner */}
+        {["paid", "unlocked", "printed", "completed"].includes(job.status) && (
+          <Card3D className="p-4 bg-[var(--surface-2)] border border-[var(--border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                <Receipt className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold text-[var(--text)]">
+                    Payment Received
+                  </h4>
+                  <Badge variant="approved">
+                    ₹{(job.quotePaise / 100).toFixed(2)}
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-[var(--text-muted)] font-mono mt-0.5">
+                  Receipt: PS-JOB-{job.id.slice(-6).toUpperCase()}
+                </p>
+              </div>
+            </div>
+            <Button3D
+              variant="secondary"
+              size="sm"
+              onClick={() => window.print()}
+              className="flex items-center gap-1.5 text-xs font-bold shrink-0"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Receipt</span>
+            </Button3D>
           </Card3D>
         )}
 
