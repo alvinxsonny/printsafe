@@ -72,7 +72,7 @@ export function MerchantShell({
   ];
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[var(--bg)] text-[var(--text)] pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col md:flex-row text-[var(--text)] pb-20 md:pb-0">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 flex-col border-r border-[var(--border)] bg-[var(--surface)] p-5 shrink-0 justify-between">
         <div className="flex flex-col gap-6">
@@ -185,7 +185,7 @@ export function MerchantShell({
               className={cn(
                 "flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all duration-150 select-none",
                 isActive
-                  ? "text-[#12724A] dark:text-[var(--accent)] font-bold scale-105"
+                  ? "text-[var(--accent)] font-bold scale-105"
                   : "text-[var(--text-muted)] hover:text-[var(--text)]"
               )}
             >

@@ -29,7 +29,7 @@ export function CustomerShell({
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)] pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col text-[var(--text)] pb-20 md:pb-0">
       {/* Top Header */}
       <header className="sticky top-0 z-40 w-full border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -92,7 +92,7 @@ export function CustomerShell({
               className={cn(
                 "flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all duration-150 select-none",
                 isActive
-                  ? "text-[#12724A] dark:text-[var(--accent)] font-bold scale-105"
+                  ? "text-[var(--accent)] font-bold scale-105"
                   : "text-[var(--text-muted)] hover:text-[var(--text)]"
               )}
             >
