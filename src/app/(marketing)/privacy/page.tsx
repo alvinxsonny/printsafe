@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Badge, Card3D, Button3D } from "@/components/ui";
+import { Button3D } from "@/components/ui";
 import {
   ShieldCheck,
   Lock,
@@ -15,7 +15,7 @@ import { CURRENT_POLICY_VERSION } from "@/config/app";
 
 export default function PrivacyNoticePage() {
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] p-4 sm:p-8 lg:p-12">
+    <div className="min-h-screen text-[var(--text)] p-4 sm:p-8 lg:p-12">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Navigation & Header */}
         <div className="flex items-center justify-between">
@@ -24,16 +24,11 @@ export default function PrivacyNoticePage() {
               <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
             </Button3D>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/terms">
-              <Button3D variant="outline" size="sm">
-                Terms of Service
-              </Button3D>
-            </Link>
-            <Badge variant="live" size="sm">
-              Policy v{CURRENT_POLICY_VERSION}
-            </Badge>
-          </div>
+          <Link href="/terms">
+            <Button3D variant="outline" size="sm">
+              Terms of Service
+            </Button3D>
+          </Link>
         </div>
 
         <div>
@@ -46,12 +41,12 @@ export default function PrivacyNoticePage() {
           </p>
         </div>
 
-        <Card3D className="space-y-8 text-sm leading-relaxed text-[var(--text-muted)] p-6 sm:p-8">
+        <div className="space-y-10 text-sm leading-relaxed text-[var(--text-muted)]">
           {/* Section 1: Zero-Trust Overview */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-[var(--accent)]" />
-              1. Zero-Trust Document Architecture
+              Zero-Trust Document Architecture
             </h2>
             <p>
               Traditional neighborhood Xerox shops require customers to share
@@ -67,7 +62,7 @@ export default function PrivacyNoticePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <FileText className="w-5 h-5 text-[var(--accent)]" />
-              2. What We Collect and Why
+              What We Collect and Why
             </h2>
             <div className="space-y-2">
               <p>
@@ -113,7 +108,7 @@ export default function PrivacyNoticePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <EyeOff className="w-5 h-5 text-[var(--accent)]" />
-              3. Who Can See What (Strict Role Isolation)
+              Who Can See What (Strict Role Isolation)
             </h2>
             <div className="overflow-x-auto">
               <table className="w-full text-xs border border-[var(--border)] rounded-xl overflow-hidden">
@@ -172,7 +167,7 @@ export default function PrivacyNoticePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <Lock className="w-5 h-5 text-[var(--accent)]" />
-              4. Honest Limits of Screenshot and Save-as-PDF Protection
+              Honest Limits of Screenshot and Save-as-PDF Protection
             </h2>
             <p>
               Honesty is central to PrintSafe. A web application cannot
@@ -202,7 +197,7 @@ export default function PrivacyNoticePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <Server className="w-5 h-5 text-[var(--accent)]" />
-              5. Data Region &amp; Sovereignty
+              Data Region &amp; Sovereignty
             </h2>
             <p>
               All primary application databases (Neon PostgreSQL), cryptographic
@@ -216,7 +211,7 @@ export default function PrivacyNoticePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <Trash2 className="w-5 h-5 text-[var(--accent)]" />
-              6. Data Retention &amp; Automated Sweeps
+              Data Retention &amp; Automated Sweeps
             </h2>
             <p>Customer files do not linger on PrintSafe indefinitely:</p>
             <ul className="list-disc pl-5 space-y-1">
@@ -242,7 +237,7 @@ export default function PrivacyNoticePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-[var(--accent)]" />
-              7. How to Exercise Your Rights
+              How to Exercise Your Rights
             </h2>
             <p>
               Under the DPDP Act 2023, you hold the right to access, export, and
@@ -280,7 +275,7 @@ export default function PrivacyNoticePage() {
               </li>
             </ul>
           </section>
-        </Card3D>
+        </div>
       </div>
     </div>
   );

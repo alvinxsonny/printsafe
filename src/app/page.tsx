@@ -29,7 +29,7 @@ export default function LandingPage() {
     "customer"
   );
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col selection:bg-[var(--accent-fill)] selection:text-zinc-950">
+    <div className="min-h-screen text-[var(--text)] flex flex-col selection:bg-[var(--accent-fill)] selection:text-zinc-950">
       {/* Navigation Bar */}
       <header className="sticky top-0 z-40 w-full border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -44,12 +44,12 @@ export default function LandingPage() {
             >
               The Problem
             </a>
-            <a
-              href="#how-it-works"
+            <Link
+              href="/how-it-works"
               className="hover:text-[var(--text)] transition-colors"
             >
               How It Works
-            </a>
+            </Link>
             <a
               href="#privacy"
               className="hover:text-[var(--text)] transition-colors"
@@ -806,7 +806,7 @@ export default function LandingPage() {
               Terms of Service
             </Link>
             <Link
-              href="/#how-it-works"
+              href="/how-it-works"
               className="hover:text-[var(--text)] transition-colors"
             >
               How It Works

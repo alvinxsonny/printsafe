@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Badge, Card3D, Button3D } from "@/components/ui";
+import { Button3D } from "@/components/ui";
 import {
   FileText,
   ShieldAlert,
@@ -14,7 +14,7 @@ import { CURRENT_POLICY_VERSION } from "@/config/app";
 
 export default function TermsOfServicePage() {
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] p-4 sm:p-8 lg:p-12">
+    <div className="min-h-screen text-[var(--text)] p-4 sm:p-8 lg:p-12">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Navigation & Header */}
         <div className="flex items-center justify-between">
@@ -23,16 +23,11 @@ export default function TermsOfServicePage() {
               <ArrowLeft className="w-4 h-4 mr-1" /> Back to Home
             </Button3D>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/privacy">
-              <Button3D variant="outline" size="sm">
-                Privacy Notice
-              </Button3D>
-            </Link>
-            <Badge variant="live" size="sm">
-              Terms v{CURRENT_POLICY_VERSION}
-            </Badge>
-          </div>
+          <Link href="/privacy">
+            <Button3D variant="outline" size="sm">
+              Privacy Policy
+            </Button3D>
+          </Link>
         </div>
 
         <div>
@@ -45,12 +40,12 @@ export default function TermsOfServicePage() {
           </p>
         </div>
 
-        <Card3D className="space-y-8 text-sm leading-relaxed text-[var(--text-muted)] p-6 sm:p-8">
+        <div className="space-y-10 text-sm leading-relaxed text-[var(--text-muted)]">
           {/* 1. Purpose & Service Scope */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <FileText className="w-5 h-5 text-[var(--accent)]" />
-              1. Scope of the Platform
+              Scope of the Platform
             </h2>
             <p>
               PrintSafe provides an intermediary zero-trust web technology
@@ -66,7 +61,7 @@ export default function TermsOfServicePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-red-500" />
-              2. Acceptable Use and Prohibited Content
+              Acceptable Use and Prohibited Content
             </h2>
             <p>
               You agree not to upload or attempt to print any material that:
@@ -97,7 +92,7 @@ export default function TermsOfServicePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <Store className="w-5 h-5 text-[var(--accent)]" />
-              3. Merchant Operating Standards
+              Merchant Operating Standards
             </h2>
             <p>
               Merchants approved to conduct business on PrintSafe covenant and
@@ -125,7 +120,7 @@ export default function TermsOfServicePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-[var(--accent)]" />
-              4. Pricing, Payments, and Automatic Refunds
+              Pricing, Payments, and Automatic Refunds
             </h2>
             <p>
               All fees and quotes are calculated and displayed in Indian Rupees
@@ -154,7 +149,7 @@ export default function TermsOfServicePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <Clock className="w-5 h-5 text-[var(--accent)]" />
-              5. Ephemeral Viewing Windows &amp; Retention
+              Ephemeral Viewing Windows &amp; Retention
             </h2>
             <p>
               Merchant viewing sessions are constrained to a 30-minute access
@@ -169,7 +164,7 @@ export default function TermsOfServicePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <Scale className="w-5 h-5 text-[var(--accent)]" />
-              6. Limitation of Technical Liability
+              Limitation of Technical Liability
             </h2>
             <p>
               PrintSafe implements industry-leading defense-in-depth measures
@@ -187,7 +182,7 @@ export default function TermsOfServicePage() {
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[var(--text)] flex items-center gap-2">
               <Scale className="w-5 h-5 text-[var(--accent)]" />
-              7. Governing Law &amp; Jurisdiction
+              Governing Law &amp; Jurisdiction
             </h2>
             <p>
               These Terms are governed by and construed in accordance with the
@@ -196,7 +191,7 @@ export default function TermsOfServicePage() {
               jurisdiction of the courts of Bengaluru, Karnataka, India.
             </p>
           </section>
-        </Card3D>
+        </div>
       </div>
     </div>
   );

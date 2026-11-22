@@ -21,7 +21,7 @@ export const metadata = {
 
 export default function HowItWorksPage() {
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] p-4 sm:p-8 lg:p-12">
+    <div className="min-h-screen text-[var(--text)] p-4 sm:p-8 lg:p-12">
       <div className="max-w-4xl mx-auto space-y-10">
         {/* Navigation & Header */}
         <div className="flex items-center justify-between">
