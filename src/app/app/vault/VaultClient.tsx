@@ -362,19 +362,15 @@ export function VaultClient() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
+            <Button3D
+              variant="primary"
+              size="sm"
               onClick={() => fileInputRef.current?.click()}
-              className="hidden sm:inline-flex"
+              className="hidden sm:inline-flex items-center gap-1.5"
             >
-              <Button3D
-                variant="primary"
-                size="sm"
-                className="flex items-center gap-1.5"
-              >
-                <Upload className="w-4 h-4" />
-                Upload Document
-              </Button3D>
-            </button>
+              <Upload className="w-4 h-4" />
+              Upload Document
+            </Button3D>
             <input
               ref={fileInputRef}
               type="file"

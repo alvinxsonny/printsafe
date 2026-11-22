@@ -21,6 +21,20 @@ function calculateDistanceMeters(
   return Math.round(R * c);
 }
 
+interface OsmCacheItem {
+  timestamp: number;
+  elements: Array<{
+    id: number | string;
+    lat?: number;
+    lon?: number;
+    center?: { lat?: number; lon?: number };
+    tags?: Record<string, string>;
+  }>;
+}
+
+const osmMemoryCache = new Map<string, OsmCacheItem>();
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -76,14 +90,21 @@ export async function GET(req: NextRequest) {
 
     // 2. Discover local real-world Xerox / copy counters that have not joined PrintSafe yet
     const unclaimedShops: NearbyShopDetail[] = [];
+    const cacheKey = `${lat.toFixed(2)},${lng.toFixed(2)},${radiusM}`;
+    const cached = osmMemoryCache.get(cacheKey);
 
-    // Attempt Overpass query for copyshops around the user's location
-    try {
-      const overpassUrl =
-        process.env.OVERPASS_URL || "https://overpass-api.de/api/interpreter";
-      const userAgent = process.env.GEO_USER_AGENT || "PrintSafe/1.0";
-      const overpassQuery = `
-[out:json][timeout:3];
+    let elements: OsmCacheItem["elements"] = [];
+
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      elements = cached.elements;
+    } else {
+      // Attempt Overpass query for copyshops around the user's location
+      try {
+        const overpassUrl =
+          process.env.OVERPASS_URL || "https://overpass-api.de/api/interpreter";
+        const userAgent = process.env.GEO_USER_AGENT || "PrintSafe/1.0";
+        const overpassQuery = `
+[out:json][timeout:2];
 (
   node["shop"="copyshop"](around:${radiusM},${lat},${lng});
   node["amenity"="printing_service"](around:${radiusM},${lat},${lng});
@@ -92,67 +113,74 @@ export async function GET(req: NextRequest) {
 out center 10;
 `.trim();
 
-      const res = await fetch(overpassUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "User-Agent": userAgent,
-        },
-        body: `data=${encodeURIComponent(overpassQuery)}`,
-        signal: AbortSignal.timeout(3000),
-      });
+        const res = await fetch(overpassUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": userAgent,
+          },
+          body: `data=${encodeURIComponent(overpassQuery)}`,
+          signal: AbortSignal.timeout(1200),
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        const elements = data.elements || [];
-
-        for (const el of elements) {
-          const shopLat = el.lat || el.center?.lat;
-          const shopLng = el.lon || el.center?.lon;
-          if (!shopLat || !shopLng) continue;
-
-          // Avoid duplicating verified shops within ~50m
-          const isNearbyDb = verifiedShops.some(
-            (vs) =>
-              vs.latitude &&
-              vs.longitude &&
-              calculateDistanceMeters(
-                vs.latitude,
-                vs.longitude,
-                shopLat,
-                shopLng
-              ) < 50
-          );
-          if (isNearbyDb) continue;
-
-          const tags = el.tags || {};
-          const dist = calculateDistanceMeters(lat, lng, shopLat, shopLng);
-
-          unclaimedShops.push({
-            id: `osm-${el.id}`,
-            name: tags.name || "Local Xerox & Copy Center",
-            addressLine:
-              tags["addr:street"] ||
-              tags["addr:suburb"] ||
-              "Nearby Photocopy Counter",
-            locality: tags["addr:suburb"] || tags["addr:district"] || null,
-            city: tags["addr:city"] || "Local Area",
-            priceBwPaise: 200,
-            priceColorPaise: 1000,
-            services: { bw: true, color: true, a3: false, duplex: true },
-            latitude: shopLat,
-            longitude: shopLng,
-            distanceMeters: dist,
-            isLive: false,
-            capacityState: "walk_in_only",
-            hours: [],
-            phone: tags.phone || tags["contact:phone"] || null,
-            hasJoinedPrintSafe: false,
+        if (res.ok) {
+          const data = await res.json();
+          elements = data.elements || [];
+          osmMemoryCache.set(cacheKey, {
+            timestamp: Date.now(),
+            elements,
           });
         }
+      } catch {
+        // Quietly fall back if Overpass is unreachable, timed out, or throttled
       }
-    } catch {
-      // Quietly fall back if Overpass is unreachable or throttled
+    }
+
+    if (elements.length > 0) {
+      for (const el of elements) {
+        const shopLat = el.lat || el.center?.lat;
+        const shopLng = el.lon || el.center?.lon;
+        if (!shopLat || !shopLng) continue;
+
+        // Avoid duplicating verified shops within ~50m
+        const isNearbyDb = verifiedShops.some(
+          (vs) =>
+            vs.latitude &&
+            vs.longitude &&
+            calculateDistanceMeters(
+              vs.latitude,
+              vs.longitude,
+              shopLat,
+              shopLng
+            ) < 50
+        );
+        if (isNearbyDb) continue;
+
+        const tags = el.tags || {};
+        const dist = calculateDistanceMeters(lat, lng, shopLat, shopLng);
+
+        unclaimedShops.push({
+          id: `osm-${el.id}`,
+          name: tags.name || "Local Xerox & Copy Center",
+          addressLine:
+            tags["addr:street"] ||
+            tags["addr:suburb"] ||
+            "Nearby Photocopy Counter",
+          locality: tags["addr:suburb"] || tags["addr:district"] || null,
+          city: tags["addr:city"] || "Local Area",
+          priceBwPaise: 200,
+          priceColorPaise: 1000,
+          services: { bw: true, color: true, a3: false, duplex: true },
+          latitude: shopLat,
+          longitude: shopLng,
+          distanceMeters: dist,
+          isLive: false,
+          capacityState: "walk_in_only",
+          hours: [],
+          phone: tags.phone || tags["contact:phone"] || null,
+          hasJoinedPrintSafe: false,
+        });
+      }
     }
 
     // 3. Fallback: If no external OSM counters found in this area, provide realistic nearby counters

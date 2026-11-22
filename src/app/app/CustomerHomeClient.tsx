@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import Link from "next/link";
 import {
   MapPin,
@@ -33,6 +39,7 @@ interface CustomerHomeClientProps {
 }
 
 const STORAGE_KEY = "printsafe_user_location";
+const emptySubscribe = () => () => {};
 
 function getSavedLocation(): {
   lat: number;
@@ -61,6 +68,12 @@ export function CustomerHomeClient({
   initialSheetsPrintedTotal = 0,
   initialHasNoPrintsLast30Days = false,
 }: CustomerHomeClientProps) {
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
   // Footprint Tree states
   const [sheetsPrintedTotal, setSheetsPrintedTotal] = useState(
     initialSheetsPrintedTotal
@@ -71,7 +84,14 @@ export function CustomerHomeClient({
   const [showTreeModal, setShowTreeModal] = useState(false);
 
   // Mandatory Location states
-  const [userLocation, setUserLocation] = useState(getSavedLocation);
+  const [customLocation, setCustomLocation] = useState<{
+    lat: number;
+    lng: number;
+    name?: string;
+  } | null>(null);
+  const userLocation =
+    customLocation ?? (isMounted ? getSavedLocation() : null);
+
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showChangeLocationModal, setShowChangeLocationModal] = useState(false);
@@ -216,7 +236,7 @@ export function CustomerHomeClient({
           lng: pos.coords.longitude,
           name: "My GPS Location",
         };
-        setUserLocation(loc);
+        setCustomLocation(loc);
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(loc));
         } catch {}
@@ -273,7 +293,7 @@ export function CustomerHomeClient({
       lng: place.lng,
       name: place.locality || place.city || place.displayName.split(",")[0],
     };
-    setUserLocation(loc);
+    setCustomLocation(loc);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(loc));
     } catch {}
@@ -302,6 +322,17 @@ export function CustomerHomeClient({
     if (partnerFilter === "unclaimed") return s.hasJoinedPrintSafe === false;
     return true;
   });
+
+  // Pre-mount / SSR fallback: identical loading shell to ensure zero hydration mismatch
+  if (!isMounted) {
+    return (
+      <CustomerShell userAlias={userAlias} fullBleed={true}>
+        <div className="w-full h-[calc(100vh-4rem)] flex items-center justify-center bg-[var(--bg)]">
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--accent)]" />
+        </div>
+      </CustomerShell>
+    );
+  }
 
   // MANDATORY LOCATION ENABLER: If location is not enabled, block with full-viewport request
   if (!userLocation) {
