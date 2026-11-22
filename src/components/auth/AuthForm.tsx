@@ -3,7 +3,14 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card3D, Button3D, Input, Badge, ThemeToggle } from "@/components/ui";
+import {
+  Card3D,
+  Button3D,
+  Input,
+  Badge,
+  ThemeToggle,
+  Logo,
+} from "@/components/ui";
 import {
   ShieldCheck,
   KeyRound,
@@ -153,15 +160,7 @@ export function AuthForm({
       {/* Top Header */}
       <header className="max-w-6xl w-full mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="w-8 h-8 rounded-xl bg-[var(--accent-fill)] border border-[#2EB673] flex items-center justify-center font-bold text-[#14213D] extrude-sm text-sm">
-            PS
-          </span>
-          <span className="text-xl font-bold tracking-tight">
-            Print
-            <span className="text-[#12724A] dark:text-[var(--accent)]">
-              Safe
-            </span>
-          </span>
+          <Logo size={34} />
         </Link>
         <ThemeToggle />
       </header>

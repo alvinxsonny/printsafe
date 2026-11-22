@@ -436,7 +436,7 @@ export function JobTrackerClient({ jobId }: { jobId: string }) {
                         isPassed
                           ? "bg-[var(--accent)] text-white"
                           : isCurrent
-                            ? "bg-[var(--accent-fill)] border-2 border-[#2EB673] text-[#14213D] animate-pulse"
+                            ? "bg-[var(--accent-fill)] border-2 border-[var(--accent-fill-darker)] text-zinc-950 font-black animate-pulse"
                             : "bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--border)]"
                       }`}
                     >

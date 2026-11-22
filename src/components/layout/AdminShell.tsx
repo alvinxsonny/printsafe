@@ -3,15 +3,9 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  ShieldAlert,
-  Store,
-  Layers,
-  ScrollText,
-  BarChart3,
-  Bell,
-} from "lucide-react";
+import { Store, Layers, ScrollText, BarChart3, Bell } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { Logo } from "@/components/ui/Logo";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { cn } from "@/lib/utils";
 
@@ -37,9 +31,7 @@ export function AdminShell({ children }: AdminShellProps) {
         <div className="flex flex-col gap-5">
           {/* Admin Header */}
           <div className="flex items-center gap-2.5 pb-4 border-b border-[var(--border)]">
-            <div className="w-8 h-8 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-[var(--danger)] extrude-sm">
-              <ShieldAlert className="w-4 h-4" />
-            </div>
+            <Logo size={32} showText={false} />
             <div>
               <h3 className="text-sm font-bold tracking-tight text-[var(--text)]">
                 PrintSafe Admin

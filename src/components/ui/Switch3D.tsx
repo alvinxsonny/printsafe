@@ -32,7 +32,7 @@ export function Switch3D({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
         "w-36 h-14 extrude-sm border",
         checked
-          ? "bg-[var(--accent-fill)] border-[#2EB673] shadow-inner"
+          ? "bg-[var(--accent-fill)] border-[var(--accent-fill-darker)] shadow-inner"
           : "bg-[var(--surface-2)] border-[var(--border)]",
         disabled && "opacity-50 cursor-not-allowed",
         className
@@ -41,9 +41,9 @@ export function Switch3D({
       {/* Background Labels */}
       <span
         className={cn(
-          "absolute text-xs font-bold tracking-wider transition-opacity duration-200 select-none",
+          "absolute text-xs font-black tracking-wider transition-opacity duration-200 select-none",
           checked
-            ? "left-3 text-[#14213D] opacity-100"
+            ? "left-3 text-zinc-950 opacity-100"
             : "right-3 text-[var(--text-muted)] opacity-100"
         )}
       >

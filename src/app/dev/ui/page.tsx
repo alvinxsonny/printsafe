@@ -28,6 +28,7 @@ import {
   PaperStackIllustration,
   EmptyStateBoxIllustration,
   FootprintTreePlaceholder,
+  Logo,
 } from "@/components/ui";
 
 function UIDevShowcase() {
@@ -42,7 +43,8 @@ function UIDevShowcase() {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between pb-6 border-b border-[var(--border)] gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-3 mb-1">
+            <Logo size={36} showText={false} />
             <h1 className="text-3xl font-extrabold tracking-tight">
               PrintSafe UI Kit
             </h1>

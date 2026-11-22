@@ -474,7 +474,7 @@ export function MerchantBillingClient() {
                   }`}
                 >
                   {p.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[var(--accent-fill)] text-[#14213D] text-[10px] font-black uppercase tracking-wider extrude-accent-sm">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[var(--accent-fill)] text-zinc-950 text-[10px] font-black uppercase tracking-wider extrude-accent-sm">
                       Most Popular
                     </div>
                   )}

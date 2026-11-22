@@ -15,7 +15,7 @@ import {
   LogOut,
   Loader2,
 } from "lucide-react";
-import { Card3D, Button3D, Badge } from "@/components/ui";
+import { Card3D, Button3D, Badge, Logo } from "@/components/ui";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { authClient } from "@/lib/auth/client";
 import type { Shop } from "@/lib/db/queries";
@@ -116,9 +116,7 @@ export default function MerchantPendingPage() {
       <header className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[var(--accent-fill)] border border-[#2EB673] flex items-center justify-center text-[#14213D] extrude-sm font-black">
-              PS
-            </div>
+            <Logo size={38} showText={false} />
             <div>
               <h1 className="text-base font-extrabold tracking-tight">
                 PrintSafe Merchant

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MapPin, FolderLock, History, User } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { Logo } from "@/components/ui/Logo";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ConsentPrompt } from "@/components/layout/ConsentPrompt";
 import { cn } from "@/lib/utils";
@@ -33,15 +34,7 @@ export function CustomerShell({
       <header className="sticky top-0 z-40 w-full border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/app" className="flex items-center gap-2 group">
-            <span className="w-8 h-8 rounded-xl bg-[var(--accent-fill)] border border-[#2EB673] flex items-center justify-center font-bold text-[#14213D] extrude-sm text-sm">
-              PS
-            </span>
-            <span className="text-xl font-bold tracking-tight text-[var(--text)]">
-              Print
-              <span className="text-[#12724A] dark:text-[var(--accent)]">
-                Safe
-              </span>
-            </span>
+            <Logo size={32} />
           </Link>
 
           {/* Desktop Navigation */}

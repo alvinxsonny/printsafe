@@ -18,7 +18,7 @@ const LIVE_PIN_HTML = (isSelected: boolean) => `
     <svg width="${isSelected ? "42" : "36"}" height="${isSelected ? "50" : "44"}" viewBox="0 0 36 44" fill="none">
       <path d="M18 0C8.05888 0 0 8.05888 0 18C0 29.5 18 44 18 44C18 44 36 29.5 36 18C36 8.05888 27.9411 0 18 0Z" fill="${isSelected ? "#0A4A2F" : "#12724A"}"/>
       <path d="M18 2C9.16344 2 2 9.16344 2 18C2 28.2 18 41.5 18 41.5C18 41.5 34 28.2 34 18C34 9.16344 26.8366 2 18 2Z" fill="${isSelected ? "#5AF3A7" : "#3DD68C"}"/>
-      <circle cx="18" cy="17" r="${isSelected ? "8" : "7"}" fill="#14213D"/>
+      <circle cx="18" cy="17" r="${isSelected ? "8" : "7"}" fill="#09090b"/>
       <circle cx="18" cy="17" r="3.5" fill="#3DD68C"/>
     </svg>
     <div class="animate-pin-pulse" style="position: absolute; top: ${isSelected ? "14px" : "12px"}; left: ${isSelected ? "16px" : "13px"}; width: 10px; height: 10px; border-radius: 9999px;"></div>

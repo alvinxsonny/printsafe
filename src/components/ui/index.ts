@@ -15,6 +15,7 @@ export * from "./FileDropzone";
 export * from "./Timeline";
 export * from "./ThemeProvider";
 export * from "./ThemeToggle";
+export * from "./Logo";
 export * from "./illustrations/PaperStackIllustration";
 export * from "./illustrations/EmptyStateBoxIllustration";
 export * from "./illustrations/FootprintTreePlaceholder";

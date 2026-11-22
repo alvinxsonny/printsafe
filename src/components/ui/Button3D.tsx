@@ -36,8 +36,8 @@ export const Button3D = React.forwardRef<HTMLButtonElement, Button3DProps>(
 
     const variantStyles = {
       primary:
-        "bg-[var(--accent-fill)] text-[#14213D] extrude-accent-md hover:-translate-y-0.5 " +
-        "active:translate-y-1 active:shadow-none border border-[#2EB673]/30",
+        "bg-[var(--accent-fill)] text-zinc-950 font-black extrude-accent-md hover:-translate-y-0.5 " +
+        "active:translate-y-1 active:shadow-none border border-[var(--accent-fill-darker)]/40",
       secondary:
         "bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] extrude-md " +
         "hover:-translate-y-0.5 active:translate-y-1 active:shadow-none",

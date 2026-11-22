@@ -1,54 +1,71 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans:
+    var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --font-display:
+    var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-body:
+    var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-mono:
+    var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    monospace;
+}
+
 @layer base {
   :root {
-    --bg: #f5f2ea;
-    --surface: #fbf9f3;
-    --surface-2: #eae4d4;
-    --text: #14213d;
-    --text-muted: #4a5568;
-    --accent: #12724a;
-    --accent-fill: #3dd68c;
-    --accent-fill-darker: #2eb673;
-    --warm: #b7791f;
-    --warm-fill: #ffb84d;
-    --info: #3558a3;
-    --info-fill: #5b8def;
-    --danger: #b42318;
-    --danger-fill: #ff6b6b;
-    --danger-darker: #8e1b13;
+    /* Crisp tactile paper light theme */
+    --bg: #f8f6f0;
+    --surface: #ffffff;
+    --surface-2: #ece8df;
+    --text: #09090b;
+    --text-muted: #52525b;
+    --accent: #0f766e;
+    --accent-fill: #10b981;
+    --accent-fill-darker: #059669;
+    --warm: #b45309;
+    --warm-fill: #f59e0b;
+    --info: #1d4ed8;
+    --info-fill: #3b82f6;
+    --danger: #b91c1c;
+    --danger-fill: #ef4444;
+    --danger-darker: #991b1b;
 
-    --edge-1: #d8d0be;
-    --edge-2: #c6bca6;
-    --edge-3: #b4a88e;
-    --shadow-ambient: rgba(20, 33, 61, 0.08);
+    --edge-1: #dfd8cb;
+    --edge-2: #cfc6b4;
+    --edge-3: #bfb4a0;
+    --shadow-ambient: rgba(15, 23, 42, 0.08);
 
-    --border: #ded7c6;
+    --border: #e2dbce;
   }
 
   .dark {
-    --bg: #0e1726;
-    --surface: #1a2b47;
-    --surface-2: #16233a;
-    --text: #eaf0f7;
-    --text-muted: #b3c0d4;
-    --accent: #3dd68c;
-    --accent-fill: #3dd68c;
-    --accent-fill-darker: #289e62;
-    --warm: #ffb84d;
-    --warm-fill: #ffb84d;
-    --info: #5b8def;
-    --info-fill: #5b8def;
-    --danger: #ff6b6b;
-    --danger-fill: #ff6b6b;
-    --danger-darker: #9c1f1f;
+    /* True OLED Pitch Black theme */
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --surface-2: #141414;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --accent: #22c55e;
+    --accent-fill: #22c55e;
+    --accent-fill-darker: #16a34a;
+    --warm: #f59e0b;
+    --warm-fill: #fbbf24;
+    --info: #3b82f6;
+    --info-fill: #60a5fa;
+    --danger: #ef4444;
+    --danger-fill: #f87171;
+    --danger-darker: #b91c1c;
 
-    --edge-1: #131f33;
-    --edge-2: #0d1624;
-    --edge-3: #080e18;
-    --shadow-ambient: rgba(0, 0, 0, 0.45);
+    --edge-1: #1f1f23;
+    --edge-2: #141416;
+    --edge-3: #0a0a0c;
+    --shadow-ambient: rgba(0, 0, 0, 0.95);
 
-    --border: #223758;
+    --border: #27272a;
   }
 }
 
@@ -56,15 +73,42 @@ body {
   background-color: var(--bg);
   color: var(--text);
   font-family:
-    var(--font-body),
+    var(--font-sans),
+    system-ui,
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
     Roboto,
     sans-serif;
+  background-image: url("/paper-grain.png");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+  position: relative;
+  min-height: 100vh;
   transition:
     background-color 0.2s ease,
     color 0.2s ease;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("/paper-grain.png");
+  background-repeat: repeat;
+  background-size: 160px 160px;
+  opacity: 0.12;
+  mix-blend-mode: multiply;
+}
+
+.dark body::before,
+html.dark body::before {
+  opacity: 0.14;
+  mix-blend-mode: screen;
 }
 
 h1,
@@ -74,11 +118,23 @@ h4,
 h5,
 h6 {
   font-family:
-    var(--font-display),
+    var(--font-sans),
+    system-ui,
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+  letter-spacing: -0.02em;
+}
+
+code,
+pre,
+kbd,
+samp,
+.font-mono {
+  font-family:
+    var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    monospace;
 }
 
 .tabular-nums {

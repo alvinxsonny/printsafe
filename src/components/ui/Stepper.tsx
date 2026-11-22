@@ -29,7 +29,7 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
                   "w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs select-none border transition-all duration-200",
                   "extrude-sm",
                   isCompleted &&
-                    "bg-[var(--accent-fill)] border-[#2EB673] text-[#14213D]",
+                    "bg-[var(--accent-fill)] border-[var(--accent-fill-darker)] text-zinc-950 font-black",
                   isCurrent &&
                     "bg-[var(--surface)] border-[var(--accent)] text-[var(--accent)] ring-2 ring-[var(--accent)]/30",
                   !isCompleted &&

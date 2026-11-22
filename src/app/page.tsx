@@ -20,25 +20,18 @@ import {
   Badge,
   ThemeToggle,
   PaperStackIllustration,
+  Logo,
 } from "@/components/ui";
 import { FootprintTree } from "@/components/tree";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col selection:bg-[var(--accent-fill)] selection:text-[#14213D]">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col selection:bg-[var(--accent-fill)] selection:text-zinc-950">
       {/* Navigation Bar */}
       <header className="sticky top-0 z-40 w-full border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <span className="w-9 h-9 rounded-2xl bg-[var(--accent-fill)] border border-[#2EB673] flex items-center justify-center font-bold text-[#14213D] extrude-sm text-sm">
-              PS
-            </span>
-            <span className="text-xl font-bold tracking-tight">
-              Print
-              <span className="text-[#12724A] dark:text-[var(--accent)]">
-                Safe
-              </span>
-            </span>
+            <Logo size={36} />
           </Link>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-[var(--text-muted)]">
@@ -254,7 +247,7 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="flex flex-col items-center text-center p-6 rounded-[28px] bg-[var(--surface)] border border-[var(--border)] extrude-md">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-fill)] border border-[#2EB673] flex items-center justify-center font-bold text-xl text-[#14213D] extrude-sm mb-6">
+            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-fill)] border border-[var(--accent-fill-darker)] flex items-center justify-center font-black text-xl text-zinc-950 extrude-sm mb-6">
               1
             </div>
             <h3 className="text-xl font-bold text-[var(--text)]">
@@ -268,7 +261,7 @@ export default function LandingPage() {
           </div>
 
           <div className="flex flex-col items-center text-center p-6 rounded-[28px] bg-[var(--surface)] border border-[var(--border)] extrude-md">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-fill)] border border-[#2EB673] flex items-center justify-center font-bold text-xl text-[#14213D] extrude-sm mb-6">
+            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-fill)] border border-[var(--accent-fill-darker)] flex items-center justify-center font-black text-xl text-zinc-950 extrude-sm mb-6">
               2
             </div>
             <h3 className="text-xl font-bold text-[var(--text)]">
@@ -282,7 +275,7 @@ export default function LandingPage() {
           </div>
 
           <div className="flex flex-col items-center text-center p-6 rounded-[28px] bg-[var(--surface)] border border-[var(--border)] extrude-md">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-fill)] border border-[#2EB673] flex items-center justify-center font-bold text-xl text-[#14213D] extrude-sm mb-6">
+            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-fill)] border border-[var(--accent-fill-darker)] flex items-center justify-center font-black text-xl text-zinc-950 extrude-sm mb-6">
               3
             </div>
             <h3 className="text-xl font-bold text-[var(--text)]">
@@ -479,10 +472,8 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="mt-auto border-t border-[var(--border)] bg-[var(--surface)] py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-sm text-[var(--text-muted)]">
-          <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-[var(--accent-fill)] border border-[#2EB673] flex items-center justify-center font-bold text-[#14213D] text-xs">
-              PS
-            </span>
+          <div className="flex items-center gap-2.5">
+            <Logo size={24} showText={false} />
             <span className="font-bold text-[var(--text)]">PrintSafe</span>
             <span>— Print anywhere. Share nothing.</span>
           </div>

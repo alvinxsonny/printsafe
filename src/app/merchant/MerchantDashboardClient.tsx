@@ -204,7 +204,7 @@ export function MerchantDashboardClient({
                 <Layers className="w-4 h-4" />
                 <span>Print Queue</span>
                 {usage.pendingJobs > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-[#14213D] text-[var(--accent)] text-[10px] font-black flex items-center justify-center">
+                  <span className="w-5 h-5 rounded-full bg-black text-[var(--accent)] text-[10px] font-black flex items-center justify-center">
                     {usage.pendingJobs}
                   </span>
                 )}

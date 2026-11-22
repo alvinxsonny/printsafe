@@ -117,7 +117,7 @@ export function MerchantShell({
                   className={cn(
                     "flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-150 select-none",
                     isActive
-                      ? "bg-[var(--accent-fill)] text-[#14213D] extrude-accent-sm font-extrabold"
+                      ? "bg-[var(--accent-fill)] text-zinc-950 extrude-accent-sm font-black"
                       : "text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
                   )}
                 >

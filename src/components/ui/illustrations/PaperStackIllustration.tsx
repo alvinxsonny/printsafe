@@ -95,7 +95,7 @@ export function PaperStackIllustration({
           />
           <path
             d="M133 63h4v4h-4z M134 63v-1.5a1 1 0 0 1 2 0V63"
-            stroke="#14213D"
+            stroke="#09090b"
             strokeWidth="1.5"
             fill="none"
           />

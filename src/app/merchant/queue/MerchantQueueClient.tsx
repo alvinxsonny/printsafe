@@ -299,7 +299,7 @@ export function MerchantQueueClient() {
                 onClick={() => setFilter(tab.id)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap select-none ${
                   isActive
-                    ? "bg-[var(--accent-fill)] text-[#14213D] extrude-accent-sm font-black"
+                    ? "bg-[var(--accent-fill)] text-zinc-950 extrude-accent-sm font-black"
                     : "bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--text)]"
                 }`}
               >

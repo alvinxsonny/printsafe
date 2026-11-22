@@ -17,7 +17,7 @@ const PIN_ICON_HTML = `
     <svg width="36" height="44" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M18 0C8.05888 0 0 8.05888 0 18C0 29.5 18 44 18 44C18 44 36 29.5 36 18C36 8.05888 27.9411 0 18 0Z" fill="#12724A"/>
       <path d="M18 2C9.16344 2 2 9.16344 2 18C2 28.2 18 41.5 18 41.5C18 41.5 34 28.2 34 18C34 9.16344 26.8366 2 18 2Z" fill="#3DD68C"/>
-      <circle cx="18" cy="17" r="7" fill="#14213D"/>
+      <circle cx="18" cy="17" r="7" fill="#09090b"/>
       <circle cx="18" cy="17" r="3.5" fill="#FBF9F3"/>
     </svg>
   </div>
