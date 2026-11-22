@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
-  Lock,
   Loader2,
   Sparkles,
 } from "lucide-react";
@@ -47,9 +46,6 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<number>(0);
 
-  // Tab privacy shield state
-  const [isWindowBlurred, setIsWindowBlurred] = useState(false);
-
   // Printing state
   const [isPrinting, setIsPrinting] = useState(false);
   const [isMarkingPrinted, setIsMarkingPrinted] = useState(false);
@@ -57,13 +53,10 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
   const [jobStatus, setJobStatus] = useState<string>("unlocked");
   const [showMarkPrintedConfirm, setShowMarkPrintedConfirm] = useState(false);
 
-  // Loaded page image URLs for canvas & print rendering
+  // Loaded page image URLs for screen & print rendering
   const [pageBlobs, setPageBlobs] = useState<Record<number, string>>({});
   const [loadingPages, setLoadingPages] = useState<Record<number, boolean>>({});
   const [pageErrors, setPageErrors] = useState<Record<number, string>>({});
-
-  // Canvas refs
-  const canvasRefs = useRef<Record<number, HTMLCanvasElement | null>>({});
 
   // 1. Fetch Session Data
   useEffect(() => {
@@ -109,36 +102,7 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
     return () => clearInterval(timer);
   }, []);
 
-  // 3. Security Deterrents: Blur / Focus listener
-  useEffect(() => {
-    function handleVisibilityChange() {
-      if (document.hidden) {
-        setIsWindowBlurred(true);
-      } else {
-        setIsWindowBlurred(false);
-      }
-    }
-
-    function handleWindowBlur() {
-      setIsWindowBlurred(true);
-    }
-
-    function handleWindowFocus() {
-      setIsWindowBlurred(false);
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("blur", handleWindowBlur);
-    window.addEventListener("focus", handleWindowFocus);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("blur", handleWindowBlur);
-      window.removeEventListener("focus", handleWindowFocus);
-    };
-  }, []);
-
-  // 4. Security Deterrents: Keyboard shortcuts & right-click
+  // 3. Security Deterrents: Keyboard shortcuts & right-click
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       // Prevent Save shortcuts
@@ -165,33 +129,9 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // 5. Load Pages into HTML5 Canvases
+  // 4. Load Pages
   const loadedPagesRef = useRef<Set<number>>(new Set());
   const inFlightPagesRef = useRef<Set<number>>(new Set());
-
-  const drawPageToCanvas = React.useCallback(
-    (
-      pageNo: number,
-      canvas: HTMLCanvasElement | null,
-      urlOverride?: string
-    ) => {
-      if (!canvas) return;
-      const objectUrl = urlOverride || pageBlobs[pageNo];
-      if (!objectUrl) return;
-
-      const img = new Image();
-      img.onload = () => {
-        canvas.width = img.naturalWidth || 1200;
-        canvas.height = img.naturalHeight || 1600;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-        }
-      };
-      img.src = objectUrl;
-    },
-    [pageBlobs]
-  );
 
   const loadSinglePage = React.useCallback(
     async (p: number) => {
@@ -218,11 +158,6 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
 
         loadedPagesRef.current.add(p);
         setPageBlobs((prev) => ({ ...prev, [p]: objectUrl }));
-
-        const canvas = canvasRefs.current[p];
-        if (canvas) {
-          drawPageToCanvas(p, canvas, objectUrl);
-        }
       } catch (err: unknown) {
         console.warn(`Failed loading page ${p}:`, err);
         const msg =
@@ -233,7 +168,7 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
         setLoadingPages((prev) => ({ ...prev, [p]: false }));
       }
     },
-    [jobId, drawPageToCanvas]
+    [jobId]
   );
 
   // Trigger page loading whenever session.requestedPages is available
@@ -247,16 +182,16 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
     }
   }, [session?.requestedPages, loadSinglePage]);
 
-  // Ensure canvases are drawn whenever pageBlobs updates
+  // Clean up object URLs on unmount
   useEffect(() => {
-    Object.entries(pageBlobs).forEach(([pageStr, url]) => {
-      const p = Number(pageStr);
-      const canvas = canvasRefs.current[p];
-      if (canvas && url) {
-        drawPageToCanvas(p, canvas, url);
-      }
-    });
-  }, [pageBlobs, drawPageToCanvas]);
+    return () => {
+      Object.values(pageBlobs).forEach((url) => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {}
+      });
+    };
+  }, [pageBlobs]);
 
   // Handle Print Action
   function handleTriggerPrint() {
@@ -264,7 +199,7 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
     setTimeout(() => {
       window.print();
       setIsPrinting(false);
-    }, 100);
+    }, 250);
   }
 
   // Handle Mark Printed
@@ -361,25 +296,9 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
       onContextMenu={(e) => e.preventDefault()}
       className="dark min-h-screen bg-[var(--bg)] text-[var(--text)] flex flex-col select-none relative"
     >
-      {/* Privacy Shield Overlay when window loses focus */}
-      {isWindowBlurred && (
-        <div className="fixed inset-0 z-50 bg-[var(--bg)]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center space-y-3 cursor-pointer">
-          <div className="w-14 h-14 rounded-3xl bg-[var(--accent-fill)]/15 border border-[var(--accent)]/30 flex items-center justify-center text-[var(--accent)] mx-auto">
-            <Lock className="w-7 h-7" />
-          </div>
-          <h3 className="text-base font-black tracking-tight text-[var(--text)]">
-            Document Hidden For Privacy
-          </h3>
-          <p className="text-xs text-[var(--text-muted)] max-w-sm">
-            Content is automatically shielded while this window or tab is not
-            active. Click anywhere on this screen to resume viewing.
-          </p>
-        </div>
-      )}
-
       {/* Access Expired Screen */}
       {isExpired && (
-        <div className="fixed inset-0 z-40 bg-[var(--bg)] flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="print:hidden fixed inset-0 z-40 bg-[var(--bg)] flex flex-col items-center justify-center p-6 text-center space-y-4">
           <div className="w-14 h-14 rounded-3xl bg-[var(--warm-fill)]/20 border border-[var(--warm)]/40 flex items-center justify-center text-[var(--warm)] mx-auto">
             <Clock className="w-7 h-7" />
           </div>
@@ -609,19 +528,18 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                   </div>
                 )}
 
-                <div
-                  className={`flex justify-center p-3 bg-black/40 overflow-hidden ${hasBlob ? "block" : "hidden"}`}
-                >
-                  <canvas
-                    ref={(el) => {
-                      canvasRefs.current[pageNo] = el;
-                      if (el && pageBlobs[pageNo]) {
-                        drawPageToCanvas(pageNo, el, pageBlobs[pageNo]);
-                      }
-                    }}
-                    className="max-w-full h-auto shadow-2xl rounded-sm"
-                  />
-                </div>
+                {hasBlob && (
+                  <div className="flex justify-center p-4 bg-black/25 overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={pageBlobs[pageNo]}
+                      alt={`Page ${pageNo} - Decrypted Document`}
+                      className="max-w-full h-auto shadow-2xl rounded-sm border border-[var(--border)] pointer-events-none select-none"
+                      draggable={false}
+                      onContextMenu={(e) => e.preventDefault()}
+                    />
+                  </div>
+                )}
               </div>
             );
           })}
@@ -660,6 +578,7 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                     height: "auto",
                     display: "block",
                     objectFit: "contain",
+                    margin: "0 auto",
                   }}
                 />
               )}
@@ -727,22 +646,34 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
             size: ${session?.settings.paper_size || "A4"};
             margin: 0;
           }
+          html,
           body {
             background: #ffffff !important;
             color: #000000 !important;
             margin: 0 !important;
             padding: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
           }
           header,
           footer,
           nav,
           aside,
           button,
-          .print\\:hidden {
+          .print\\:hidden,
+          [role="dialog"] {
             display: none !important;
           }
           #print-container {
             display: block !important;
+            position: static !important;
+            visibility: visible !important;
+          }
+          #print-container img {
+            display: block !important;
+            visibility: visible !important;
+            width: 100% !important;
+            height: auto !important;
           }
           .page-break {
             page-break-after: always !important;
