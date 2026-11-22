@@ -104,10 +104,6 @@ export function AuthForm({
         return;
       }
 
-      if (data.devOtp) {
-        setOtp(data.devOtp);
-      }
-
       setSuccessMessage(data.message || "Passcode sent to your inbox!");
       setStep("otp");
       setCooldown(60);

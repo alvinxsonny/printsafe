@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import { storeDevOtp } from "@/lib/auth/devOtp";
 
 const smtpPort = Number(process.env.SMTP_PORT || "465");
 const isSecure = smtpPort === 465;
@@ -56,9 +55,6 @@ export async function sendOtpEmail(
   otp: string,
   roleName: string = "Customer"
 ) {
-  // Store in memory for instant dev/test access
-  storeDevOtp(to, otp);
-
   // Always log OTP prominently in server console for friction-free local testing
   console.log(`\n======================================================`);
   console.log(`🔑 [PrintSafe OTP Code] To: ${to} (${roleName})`);
