@@ -12,7 +12,9 @@ import {
   Trash2,
   ExternalLink,
   Loader2,
+  LogOut,
 } from "lucide-react";
+import { performLogout } from "@/lib/auth/logout";
 
 interface SettingsClientProps {
   user: {
@@ -243,7 +245,30 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
           </Button3D>
         </Card3D>
 
-        {/* 4. Danger Zone: Delete My Account (Task 3) */}
+        {/* 4. Session Management: Log Out */}
+        <Card3D className="p-5 space-y-3">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-[var(--border)] text-[var(--text)]">
+            <LogOut className="w-4 h-4 text-[var(--accent)]" />
+            <h2 className="text-xs font-extrabold uppercase tracking-wider">
+              Session Management
+            </h2>
+          </div>
+          <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+            Securely sign out of your PrintSafe customer vault on this device.
+            Your documents and settings remain safely encrypted.
+          </p>
+          <Button3D
+            variant="secondary"
+            size="sm"
+            onClick={() => void performLogout()}
+            className="flex items-center gap-1.5 text-xs font-bold"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Log Out of My Vault</span>
+          </Button3D>
+        </Card3D>
+
+        {/* 5. Danger Zone: Delete My Account (Task 3) */}
         <Card3D className="p-5 border-2 border-red-500/30 bg-red-500/5 space-y-3">
           <div className="flex items-center gap-2.5 pb-2 border-b border-red-500/20 text-red-600 dark:text-red-400">
             <Trash2 className="w-4 h-4" />

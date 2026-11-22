@@ -10,11 +10,13 @@ import {
   CreditCard,
   Store,
   Bell,
+  LogOut,
 } from "lucide-react";
 import { Switch3D } from "@/components/ui/Switch3D";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ConsentPrompt } from "@/components/layout/ConsentPrompt";
+import { performLogout } from "@/lib/auth/logout";
 import { cn } from "@/lib/utils";
 
 export interface MerchantShellProps {
@@ -130,16 +132,26 @@ export function MerchantShell({
         </div>
 
         {/* Footer with ThemeToggle & NotificationBell */}
-        <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between">
-          <Link
-            href="/"
-            className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text)]"
+        <div className="pt-4 border-t border-[var(--border)] flex flex-col gap-3">
+          <button
+            onClick={() => void performLogout()}
+            className="w-full h-8 px-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] hover:border-red-500 hover:text-red-500 text-xs font-bold text-[var(--text-muted)] flex items-center justify-center gap-1.5 transition-colors"
+            title="Log Out of Merchant Portal"
           >
-            ← Home
-          </Link>
-          <div className="flex items-center gap-2">
-            <NotificationBell targetHref="/merchant/notifications" />
-            <ThemeToggle />
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Log Out</span>
+          </button>
+          <div className="flex items-center justify-between">
+            <Link
+              href="/"
+              className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text)]"
+            >
+              ← Home
+            </Link>
+            <div className="flex items-center gap-2">
+              <NotificationBell targetHref="/merchant/notifications" />
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </aside>
@@ -162,6 +174,13 @@ export function MerchantShell({
             />
             <NotificationBell targetHref="/merchant/notifications" />
             <ThemeToggle />
+            <button
+              onClick={() => void performLogout()}
+              className="p-1.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-red-500 hover:border-red-500"
+              title="Log Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </header>
 

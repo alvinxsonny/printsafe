@@ -3,10 +3,18 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store, Layers, ScrollText, BarChart3, Bell } from "lucide-react";
+import {
+  Store,
+  Layers,
+  ScrollText,
+  BarChart3,
+  Bell,
+  LogOut,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Logo } from "@/components/ui/Logo";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { performLogout } from "@/lib/auth/logout";
 import { cn } from "@/lib/utils";
 
 export interface AdminShellProps {
@@ -66,17 +74,27 @@ export function AdminShell({ children }: AdminShellProps) {
           </nav>
         </div>
 
-        {/* Footer with NotificationBell & ThemeToggle */}
-        <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between">
-          <Link
-            href="/"
-            className="text-[11px] font-semibold text-[var(--text-muted)] hover:text-[var(--text)]"
+        {/* Footer with NotificationBell, ThemeToggle & LogOut */}
+        <div className="pt-4 border-t border-[var(--border)] flex flex-col gap-3">
+          <button
+            onClick={() => void performLogout()}
+            className="w-full h-8 px-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] hover:border-red-500 hover:text-red-500 text-xs font-bold text-[var(--text-muted)] flex items-center justify-center gap-1.5 transition-colors"
+            title="Log Out of Admin Console"
           >
-            ← Landing
-          </Link>
-          <div className="flex items-center gap-2">
-            <NotificationBell targetHref="/admin/notifications" />
-            <ThemeToggle />
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Log Out</span>
+          </button>
+          <div className="flex items-center justify-between">
+            <Link
+              href="/"
+              className="text-[11px] font-semibold text-[var(--text-muted)] hover:text-[var(--text)]"
+            >
+              ← Landing
+            </Link>
+            <div className="flex items-center gap-2">
+              <NotificationBell targetHref="/admin/notifications" />
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </aside>

@@ -36,8 +36,9 @@ const CLOSED_PIN_HTML = (isSelected: boolean) => `
 `;
 
 const USER_LOCATION_HTML = `
-  <div style="position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
-    <div class="animate-user-pulse" style="width: 18px; height: 18px; background-color: #5B8DEF; border: 3px solid #FFFFFF; border-radius: 9999px; box-shadow: 0 2px 6px rgba(0,0,0,0.35);"></div>
+  <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+    <div class="animate-user-pulse" style="position: absolute; width: 28px; height: 28px; border-radius: 9999px; background-color: rgba(37, 99, 235, 0.35);"></div>
+    <div style="position: relative; width: 16px; height: 16px; background-color: #2563EB; border: 3px solid #FFFFFF; border-radius: 9999px; box-shadow: 0 2px 8px rgba(0,0,0,0.45);"></div>
   </div>
 `;
 
@@ -113,7 +114,7 @@ export default function ShopMap({
     };
   }, []);
 
-  // 2. Update User Location Marker
+  // 2. Update User Location Marker & Viewport
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -122,8 +123,8 @@ export default function ShopMap({
       const userIcon = L.divIcon({
         className: "custom-user-pin",
         html: USER_LOCATION_HTML,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
       });
 
       if (!userMarkerRef.current) {
@@ -134,6 +135,12 @@ export default function ShopMap({
       } else {
         userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
       }
+
+      // Smoothly pan & center map on the user's GPS coordinates
+      map.flyTo([userLocation.lat, userLocation.lng], 15, {
+        animate: true,
+        duration: 0.8,
+      });
     } else if (userMarkerRef.current) {
       userMarkerRef.current.remove();
       userMarkerRef.current = null;

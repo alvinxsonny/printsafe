@@ -10,8 +10,6 @@ import {
   Phone,
   ExternalLink,
   RotateCw,
-  List,
-  Map as MapIcon,
   AlertCircle,
   Printer,
   ChevronUp,
@@ -25,7 +23,7 @@ import {
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Card3D, Button3D, Badge, Modal } from "@/components/ui";
 import { ShopMap } from "@/components/map";
-import { FootprintTreeCard, FootprintTree } from "@/components/tree";
+import { FootprintTree } from "@/components/tree";
 import type { NearbyShopDetail } from "@/lib/db/queries";
 import type { PlaceSearchResult } from "@/lib/geo/search";
 
@@ -100,8 +98,7 @@ export function CustomerHomeClient({
   const [radiusM, setRadiusM] = useState(5000); // 5 km default
   const [includeClosed, setIncludeClosed] = useState(false);
 
-  // View mode & UI Layout
-  const [viewMode, setViewMode] = useState<"map" | "list">("map");
+  // UI Layout
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
 
@@ -426,20 +423,6 @@ export function CustomerHomeClient({
               )}
             </button>
 
-            {/* Paper Footprint Button (Minimal Tree SVG) */}
-            <Button3D
-              variant="outline"
-              size="sm"
-              onClick={() => setShowTreeModal(true)}
-              className="h-9 flex items-center gap-1.5 text-xs font-bold shrink-0 px-2.5"
-              title="View Paper Footprint Tree"
-            >
-              <TreePine className="w-4 h-4 text-[var(--accent)]" />
-              <span className="hidden sm:inline font-mono text-[11px]">
-                {sheetsPrintedTotal}
-              </span>
-            </Button3D>
-
             {/* Desktop Sidebar Toggle */}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -453,33 +436,19 @@ export function CustomerHomeClient({
               )}
             </button>
 
-            {/* View Mode Toggle (Map / List) */}
-            <div className="flex items-center bg-[var(--surface-2)] p-0.5 rounded-xl border border-[var(--border)] shrink-0">
-              <button
-                onClick={() => setViewMode("map")}
-                className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
-                  viewMode === "map"
-                    ? "bg-[var(--surface)] text-[var(--text)] shadow-xs"
-                    : "text-[var(--text-muted)] hover:text-[var(--text)]"
-                }`}
-                title="Map View"
-              >
-                <MapIcon className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Map</span>
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
-                  viewMode === "list"
-                    ? "bg-[var(--surface)] text-[var(--text)] shadow-xs"
-                    : "text-[var(--text-muted)] hover:text-[var(--text)]"
-                }`}
-                title="List View"
-              >
-                <List className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">List</span>
-              </button>
-            </div>
+            {/* Paper Footprint Button (Tree minimal SVG to far right) */}
+            <Button3D
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTreeModal(true)}
+              className="h-9 flex items-center gap-1.5 text-xs font-bold shrink-0 px-2.5 ml-auto"
+              title="View Paper Footprint Tree"
+            >
+              <TreePine className="w-4 h-4 text-[var(--accent)]" />
+              <span className="font-mono text-[11px]">
+                {sheetsPrintedTotal}
+              </span>
+            </Button3D>
           </div>
         </div>
 
@@ -689,94 +658,16 @@ export function CustomerHomeClient({
 
           {/* Full Browser Width & Height Map Canvas */}
           <div className="relative flex-1 w-full h-full overflow-hidden">
-            {viewMode === "map" ? (
-              <ShopMap
-                userLocation={userLocation || DEFAULT_CENTER}
-                shops={shops}
-                selectedShopId={selectedShop?.id || null}
-                onSelectShop={(shop) => {
-                  setSelectedShop(shop);
-                  setIsSheetExpanded(true);
-                }}
-                className="w-full h-full"
-              />
-            ) : (
-              /* Accessible Pure List View Alternative */
-              <div className="w-full h-full p-4 sm:p-6 overflow-y-auto max-w-2xl mx-auto space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-bold">
-                    Nearby Xerox Shops ({shops.length})
-                  </h2>
-                  <Badge variant="live" size="sm">
-                    List Mode
-                  </Badge>
-                </div>
-
-                {/* Paper Footprint Card */}
-                <FootprintTreeCard
-                  sheetsPrintedTotal={sheetsPrintedTotal}
-                  hasNoPrintsLast30Days={hasNoPrintsLast30Days}
-                />
-
-                {shops.length === 0 ? (
-                  <Card3D className="p-8 text-center space-y-3">
-                    <p className="text-xs text-[var(--text-muted)]">
-                      No shops match your current radius.
-                    </p>
-                  </Card3D>
-                ) : (
-                  shops.map((shop) => (
-                    <Card3D key={shop.id} className="p-3.5 space-y-2.5">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-sm font-bold text-[var(--text)]">
-                            {shop.name}
-                          </h3>
-                          <p className="text-xs text-[var(--text-muted)]">
-                            {shop.addressLine}, {shop.locality || shop.city}
-                          </p>
-                        </div>
-                        <Badge
-                          variant={shop.isLive ? "live" : "offline"}
-                          size="sm"
-                        >
-                          {shop.isLive ? "Open" : "Closed"}
-                        </Badge>
-                      </div>
-
-                      <div className="flex items-center gap-4 text-xs font-mono">
-                        <span>
-                          B&amp;W: ₹{(shop.priceBwPaise / 100).toFixed(2)}
-                        </span>
-                        <span>
-                          Colour: ₹{(shop.priceColorPaise / 100).toFixed(2)}
-                        </span>
-                        <span className="text-[var(--text-muted)]">
-                          {formatDistance(shop.distanceMeters)}
-                        </span>
-                      </div>
-
-                      <div className="pt-2 flex items-center justify-end gap-2">
-                        <Link href={`/app/jobs/new?shop=${shop.id}`}>
-                          <Button3D
-                            variant="primary"
-                            size="sm"
-                            disabled={
-                              !shop.isLive ||
-                              shop.capacityState === "at_capacity"
-                            }
-                            className="flex items-center gap-1.5 text-xs font-bold"
-                          >
-                            <Printer className="w-3.5 h-3.5" />
-                            Request Print
-                          </Button3D>
-                        </Link>
-                      </div>
-                    </Card3D>
-                  ))
-                )}
-              </div>
-            )}
+            <ShopMap
+              userLocation={userLocation || DEFAULT_CENTER}
+              shops={shops}
+              selectedShopId={selectedShop?.id || null}
+              onSelectShop={(shop) => {
+                setSelectedShop(shop);
+                setIsSheetExpanded(true);
+              }}
+              className="w-full h-full"
+            />
 
             {/* Mobile Bottom Sheet (Draggable / Collapsible) */}
             <div className="lg:hidden absolute left-0 right-0 bottom-0 z-30 bg-[var(--surface)] border-t border-[var(--border)] rounded-t-3xl shadow-2xl transition-all duration-300">

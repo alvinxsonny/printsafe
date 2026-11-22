@@ -252,6 +252,12 @@ samp,
   animation: user-pulse 2s infinite;
 }
 
+/* Leaflet Custom Pin Overrides */
+.leaflet-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
 /* Accessibility: prefers-reduced-motion everywhere (Phase 14 Task 6) */
 @media (prefers-reduced-motion: reduce) {
   *,

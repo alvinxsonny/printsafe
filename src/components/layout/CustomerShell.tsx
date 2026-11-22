@@ -3,11 +3,12 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MapPin, FolderLock, History, User } from "lucide-react";
+import { MapPin, FolderLock, History, User, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Logo } from "@/components/ui/Logo";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { ConsentPrompt } from "@/components/layout/ConsentPrompt";
+import { performLogout } from "@/lib/auth/logout";
 import { cn } from "@/lib/utils";
 
 export interface CustomerShellProps {
@@ -83,6 +84,14 @@ export function CustomerShell({
             </span>
             <NotificationBell targetHref="/app/notifications" />
             <ThemeToggle />
+            <button
+              onClick={() => void performLogout()}
+              className="h-8 px-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] hover:border-red-500 hover:text-red-500 text-xs font-bold text-[var(--text-muted)] flex items-center gap-1.5 transition-colors"
+              title="Log Out of PrintSafe"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Log Out</span>
+            </button>
           </div>
         </div>
       </header>
