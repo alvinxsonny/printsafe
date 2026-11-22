@@ -60,6 +60,7 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
   // Loaded page image URLs for canvas & print rendering
   const [pageBlobs, setPageBlobs] = useState<Record<number, string>>({});
   const [loadingPages, setLoadingPages] = useState<Record<number, boolean>>({});
+  const [pageErrors, setPageErrors] = useState<Record<number, string>>({});
 
   // Canvas refs
   const canvasRefs = useRef<Record<number, HTMLCanvasElement | null>>({});
@@ -165,60 +166,97 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
   }, []);
 
   // 5. Load Pages into HTML5 Canvases
-  useEffect(() => {
-    if (!session?.requestedPages) return;
+  const loadedPagesRef = useRef<Set<number>>(new Set());
+  const inFlightPagesRef = useRef<Set<number>>(new Set());
 
-    let ignore = false;
+  const drawPageToCanvas = React.useCallback(
+    (
+      pageNo: number,
+      canvas: HTMLCanvasElement | null,
+      urlOverride?: string
+    ) => {
+      if (!canvas) return;
+      const objectUrl = urlOverride || pageBlobs[pageNo];
+      if (!objectUrl) return;
 
-    async function loadPages() {
-      for (const p of session!.requestedPages) {
-        if (pageBlobs[p] || loadingPages[p]) continue;
-
-        setLoadingPages((prev) => ({ ...prev, [p]: true }));
-
-        try {
-          const res = await fetch(`/api/viewer/${jobId}/page/${p}`);
-          if (!res.ok) {
-            throw new Error(`Failed to load page ${p}`);
-          }
-
-          const blob = await res.blob();
-          const objectUrl = URL.createObjectURL(blob);
-
-          if (!ignore) {
-            setPageBlobs((prev) => ({ ...prev, [p]: objectUrl }));
-
-            // Draw to canvas
-            const img = new Image();
-            img.onload = () => {
-              const canvas = canvasRefs.current[p];
-              if (canvas) {
-                canvas.width = img.naturalWidth || 1200;
-                canvas.height = img.naturalHeight || 1600;
-                const ctx = canvas.getContext("2d");
-                if (ctx) {
-                  ctx.drawImage(img, 0, 0);
-                }
-              }
-            };
-            img.src = objectUrl;
-          }
-        } catch (err) {
-          console.warn(`Failed loading page ${p}:`, err);
-        } finally {
-          if (!ignore) {
-            setLoadingPages((prev) => ({ ...prev, [p]: false }));
-          }
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = img.naturalWidth || 1200;
+        canvas.height = img.naturalHeight || 1600;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
         }
+      };
+      img.src = objectUrl;
+    },
+    [pageBlobs]
+  );
+
+  const loadSinglePage = React.useCallback(
+    async (p: number) => {
+      if (inFlightPagesRef.current.has(p)) return;
+      inFlightPagesRef.current.add(p);
+      setLoadingPages((prev) => ({ ...prev, [p]: true }));
+      setPageErrors((prev) => {
+        const next = { ...prev };
+        delete next[p];
+        return next;
+      });
+
+      try {
+        const res = await fetch(`/api/viewer/${jobId}/page/${p}`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(
+            errData.error || `Failed to load page ${p} (HTTP ${res.status})`
+          );
+        }
+
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+
+        loadedPagesRef.current.add(p);
+        setPageBlobs((prev) => ({ ...prev, [p]: objectUrl }));
+
+        const canvas = canvasRefs.current[p];
+        if (canvas) {
+          drawPageToCanvas(p, canvas, objectUrl);
+        }
+      } catch (err: unknown) {
+        console.warn(`Failed loading page ${p}:`, err);
+        const msg =
+          err instanceof Error ? err.message : `Failed to load page ${p}`;
+        setPageErrors((prev) => ({ ...prev, [p]: msg }));
+      } finally {
+        inFlightPagesRef.current.delete(p);
+        setLoadingPages((prev) => ({ ...prev, [p]: false }));
+      }
+    },
+    [jobId, drawPageToCanvas]
+  );
+
+  // Trigger page loading whenever session.requestedPages is available
+  useEffect(() => {
+    if (!session?.requestedPages || session.requestedPages.length === 0) return;
+
+    for (const p of session.requestedPages) {
+      if (!loadedPagesRef.current.has(p) && !inFlightPagesRef.current.has(p)) {
+        void loadSinglePage(p);
       }
     }
+  }, [session?.requestedPages, loadSinglePage]);
 
-    void loadPages();
-
-    return () => {
-      ignore = true;
-    };
-  }, [session, jobId, pageBlobs, loadingPages]);
+  // Ensure canvases are drawn whenever pageBlobs updates
+  useEffect(() => {
+    Object.entries(pageBlobs).forEach(([pageStr, url]) => {
+      const p = Number(pageStr);
+      const canvas = canvasRefs.current[p];
+      if (canvas && url) {
+        drawPageToCanvas(p, canvas, url);
+      }
+    });
+  }, [pageBlobs, drawPageToCanvas]);
 
   // Handle Print Action
   function handleTriggerPrint() {
@@ -524,6 +562,8 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
         <div className="print:hidden space-y-6">
           {session?.requestedPages.map((pageNo) => {
             const isPageLoading = loadingPages[pageNo] && !pageBlobs[pageNo];
+            const pageError = pageErrors[pageNo];
+            const hasBlob = !!pageBlobs[pageNo];
 
             return (
               <div
@@ -544,10 +584,29 @@ export function SecureViewerClient({ jobId }: { jobId: string }) {
                   </div>
                 )}
 
-                <div className="flex justify-center p-2 bg-gray-50 overflow-hidden">
+                {pageError && !hasBlob && (
+                  <div className="h-96 flex flex-col items-center justify-center gap-3 text-red-500 p-6 text-center">
+                    <AlertCircle className="w-8 h-8" />
+                    <p className="text-xs font-semibold">{pageError}</p>
+                    <Button3D
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => void loadSinglePage(pageNo)}
+                    >
+                      Retry Loading Page
+                    </Button3D>
+                  </div>
+                )}
+
+                <div
+                  className={`flex justify-center p-2 bg-gray-50 overflow-hidden ${hasBlob ? "block" : "hidden"}`}
+                >
                   <canvas
                     ref={(el) => {
                       canvasRefs.current[pageNo] = el;
+                      if (el && pageBlobs[pageNo]) {
+                        drawPageToCanvas(pageNo, el, pageBlobs[pageNo]);
+                      }
                     }}
                     className="max-w-full h-auto shadow-inner rounded-sm"
                   />

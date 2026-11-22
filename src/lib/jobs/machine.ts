@@ -365,30 +365,51 @@ export async function transitionJob(params: {
   });
 
   // 5. Emit In-App Notification and Web Push to Opposite Party
-  const notifyRecipientId =
-    actor.role === "customer" ? job.shopId : job.customerId;
+  let notifyRecipientId: string | null = null;
+  if (actor.role === "customer") {
+    // If customer acted, recipient is the shop's owner (user id)
+    try {
+      const [shop] = await db
+        .select({ ownerId: shops.ownerId })
+        .from(shops)
+        .where(eq(shops.id, job.shopId))
+        .limit(1);
+      notifyRecipientId = shop?.ownerId ?? null;
+    } catch {
+      notifyRecipientId = null;
+    }
+  } else {
+    // If merchant or admin acted, recipient is the customer
+    notifyRecipientId = job.customerId;
+  }
 
-  await db.insert(notifications).values({
-    id: `notif_${crypto.randomUUID()}`,
-    userId: notifyRecipientId,
-    type: `job_status_${newStatus}`,
-    payload: {
-      jobId,
-      status: newStatus,
-      message: `Print job status updated to ${newStatus}.`,
-    },
-    createdAt: now,
-  });
+  if (notifyRecipientId) {
+    try {
+      await db.insert(notifications).values({
+        id: `notif_${crypto.randomUUID()}`,
+        userId: notifyRecipientId,
+        type: `job_status_${newStatus}`,
+        payload: {
+          jobId,
+          status: newStatus,
+          message: `Print job status updated to ${newStatus}.`,
+        },
+        createdAt: now,
+      });
 
-  // Web Push to Opposite Party
-  void sendPushNotification(notifyRecipientId, {
-    title: "PrintSafe Update",
-    body: `Print job #${jobId.slice(-6).toUpperCase()} status is now ${newStatus}.`,
-    url:
-      actor.role === "customer"
-        ? `/merchant/jobs/${jobId}`
-        : `/app/jobs/${jobId}`,
-  });
+      // Web Push to Opposite Party
+      void sendPushNotification(notifyRecipientId, {
+        title: "PrintSafe Update",
+        body: `Print job #${jobId.slice(-6).toUpperCase()} status is now ${newStatus}.`,
+        url:
+          actor.role === "customer"
+            ? `/merchant/jobs/${jobId}`
+            : `/app/jobs/${jobId}`,
+      });
+    } catch (notifErr) {
+      console.warn("Failed delivering transition notification:", notifErr);
+    }
+  }
 
   // Key Event Transactional Emails (Section 13 Task 2)
   if (action === "accept" || action === "reject") {
