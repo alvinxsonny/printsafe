@@ -16,15 +16,9 @@ import {
   Lock,
   KeyRound,
   CheckCircle2,
+  ChevronDown,
 } from "lucide-react";
-import {
-  Button3D,
-  Card3D,
-  Badge,
-  ThemeToggle,
-  PaperStackIllustration,
-  Logo,
-} from "@/components/ui";
+import { Button3D, Card3D, Badge, ThemeToggle, Logo } from "@/components/ui";
 import { FootprintTree } from "@/components/tree";
 
 export default function LandingPage() {
@@ -82,9 +76,9 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-10 sm:py-14 lg:py-18 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+      {/* Hero Section - Fits browser viewport height */}
+      <section className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex flex-col justify-between py-6 sm:py-8 lg:py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center my-auto">
           {/* Left Text Column */}
           <div className="lg:col-span-7 flex flex-col gap-6 text-center lg:text-left">
             <div className="flex items-center justify-center lg:justify-start">
@@ -235,6 +229,17 @@ export default function LandingPage() {
               </Card3D>
             </div>
           </div>
+        </div>
+
+        {/* Subtle Scroll Down Prompt */}
+        <div className="hidden sm:flex items-center justify-center pt-4 pb-1 text-xs text-[var(--text-muted)] font-medium">
+          <a
+            href="#problem"
+            className="flex items-center gap-1.5 hover:text-[var(--text)] transition-colors"
+          >
+            <span>Scroll down to see the risks</span>
+            <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
+          </a>
         </div>
       </section>
 
