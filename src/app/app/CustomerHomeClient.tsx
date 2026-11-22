@@ -18,8 +18,6 @@ import {
   TreePine,
   PanelLeftClose,
   PanelLeftOpen,
-  CheckCircle2,
-  Share2,
 } from "lucide-react";
 import { CustomerShell } from "@/components/layout/CustomerShell";
 import { Card3D, Button3D, Badge, Modal } from "@/components/ui";
@@ -96,7 +94,6 @@ export function CustomerHomeClient({
   const [partnerFilter, setPartnerFilter] = useState<
     "all" | "joined" | "unclaimed"
   >("all");
-  const [invitedShops, setInvitedShops] = useState<Record<string, boolean>>({});
 
   // UI Layout
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -290,10 +287,6 @@ export function CustomerHomeClient({
       return `${Math.round(m)} m away`;
     }
     return `${(m / 1000).toFixed(1)} km away`;
-  }
-
-  function handleInviteShop(shopId: string) {
-    setInvitedShops((prev) => ({ ...prev, [shopId]: true }));
   }
 
   // Calculate Infographics Stats
@@ -652,7 +645,7 @@ export function CustomerHomeClient({
             </div>
 
             {/* Storefronts List */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
+            <div className="flex-1 overflow-y-auto p-3.5 space-y-3.5">
               {isLoadingShops && shops.length === 0 ? (
                 <div className="p-8 text-center space-y-2">
                   <Loader2 className="w-5 h-5 animate-spin text-[var(--accent)] mx-auto" />
@@ -690,8 +683,6 @@ export function CustomerHomeClient({
                     isSelected={selectedShop?.id === shop.id}
                     onSelect={() => setSelectedShop(shop)}
                     formatDistance={formatDistance}
-                    isInvited={Boolean(invitedShops[shop.id])}
-                    onInvite={() => handleInviteShop(shop.id)}
                   />
                 ))
               )}
@@ -725,7 +716,7 @@ export function CustomerHomeClient({
                     </Badge>
                   ) : (
                     <Badge variant="neutral" size="sm">
-                      Not on PrintSafe yet
+                      Walk-in Counter (Not on PrintSafe)
                     </Badge>
                   )}
                   {selectedShop.isLive && (
@@ -764,14 +755,14 @@ export function CustomerHomeClient({
                     <Button3D
                       variant="secondary"
                       size="sm"
-                      className="w-full flex items-center justify-center gap-1 text-xs"
+                      className="w-full flex items-center justify-center gap-1 text-xs font-semibold"
                     >
                       <ExternalLink className="w-3 h-3" />
                       Directions
                     </Button3D>
                   </a>
 
-                  {selectedShop.hasJoinedPrintSafe !== false ? (
+                  {selectedShop.hasJoinedPrintSafe !== false && (
                     <Link
                       href={`/app/jobs/new?shop=${selectedShop.id}`}
                       className="flex-1"
@@ -789,26 +780,6 @@ export function CustomerHomeClient({
                         Print
                       </Button3D>
                     </Link>
-                  ) : (
-                    <Button3D
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleInviteShop(selectedShop.id)}
-                      disabled={invitedShops[selectedShop.id]}
-                      className="flex-1 flex items-center justify-center gap-1 text-xs font-bold"
-                    >
-                      {invitedShops[selectedShop.id] ? (
-                        <>
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                          <span>Invited</span>
-                        </>
-                      ) : (
-                        <>
-                          <Share2 className="w-3.5 h-3.5 text-amber-500" />
-                          <span>Invite Shop</span>
-                        </>
-                      )}
-                    </Button3D>
                   )}
                 </div>
               </div>
@@ -882,12 +853,12 @@ export function CustomerHomeClient({
                         <Button3D
                           variant="secondary"
                           size="sm"
-                          className="w-full text-xs"
+                          className="w-full text-xs font-semibold"
                         >
                           Directions
                         </Button3D>
                       </a>
-                      {selectedShop.hasJoinedPrintSafe !== false ? (
+                      {selectedShop.hasJoinedPrintSafe !== false && (
                         <Link
                           href={`/app/jobs/new?shop=${selectedShop.id}`}
                           className="flex-1"
@@ -901,26 +872,16 @@ export function CustomerHomeClient({
                             Request Print
                           </Button3D>
                         </Link>
-                      ) : (
-                        <Button3D
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleInviteShop(selectedShop.id)}
-                          disabled={invitedShops[selectedShop.id]}
-                          className="flex-1 text-xs font-bold"
-                        >
-                          {invitedShops[selectedShop.id] ? "Invited" : "Invite"}
-                        </Button3D>
                       )}
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {filteredShops.slice(0, 6).map((shop) => (
                       <div
                         key={shop.id}
                         onClick={() => setSelectedShop(shop)}
-                        className="p-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] flex items-center justify-between text-xs cursor-pointer"
+                        className="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] flex items-center justify-between text-xs cursor-pointer"
                       >
                         <div className="truncate pr-2">
                           <p className="font-bold text-[var(--text)] truncate">
@@ -1006,22 +967,18 @@ function ShopListItemCard({
   isSelected,
   onSelect,
   formatDistance,
-  isInvited,
-  onInvite,
 }: {
   shop: NearbyShopDetail;
   isSelected: boolean;
   onSelect: () => void;
   formatDistance: (m: number) => string;
-  isInvited?: boolean;
-  onInvite?: () => void;
 }) {
   const isPartner = shop.hasJoinedPrintSafe !== false;
 
   return (
     <Card3D
       onClick={onSelect}
-      className={`p-3 cursor-pointer transition-all border ${
+      className={`p-3.5 cursor-pointer transition-all border ${
         isSelected
           ? "border-[var(--accent)] bg-[var(--surface-2)] shadow-md"
           : "border-[var(--border)] hover:border-[var(--accent)]/50"
@@ -1057,15 +1014,9 @@ function ShopListItemCard({
               ₹{(shop.priceBwPaise / 100).toFixed(2)}/pg
             </span>
           ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onInvite) onInvite();
-              }}
-              className="text-[9px] font-bold text-amber-500 hover:underline"
-            >
-              {isInvited ? "✓ Invitation Sent" : "Invite Shop →"}
-            </button>
+            <span className="text-[10px] text-[var(--text-muted)] font-medium">
+              Walk-in Counter
+            </span>
           )}
         </div>
       </div>
