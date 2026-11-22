@@ -27,7 +27,7 @@ function getReducedMotionServerSnapshot() {
 export function Card3D({
   className,
   enableTilt = true,
-  intensity = 6,
+  intensity = 1,
   children,
   ...props
 }: Card3DProps) {
@@ -50,8 +50,11 @@ export function Card3D({
     const mouseX = e.clientX - centerX;
     const mouseY = e.clientY - centerY;
 
-    const rotateX = -((mouseY / (rect.height / 2)) * intensity);
-    const rotateY = (mouseX / (rect.width / 2)) * intensity;
+    // Very subtle minimal tilt (clamped to max ±1.2 deg)
+    const rawX = -((mouseY / (rect.height / 2)) * intensity);
+    const rawY = (mouseX / (rect.width / 2)) * intensity;
+    const rotateX = Math.max(-1.2, Math.min(1.2, rawX));
+    const rotateY = Math.max(-1.2, Math.min(1.2, rawY));
 
     setRotation({ x: rotateX, y: rotateY });
   };
@@ -66,10 +69,10 @@ export function Card3D({
   const style: React.CSSProperties = {
     transform:
       isHovered && enableTilt && !reducedMotion
-        ? `perspective(1000px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) translateY(-2px)`
-        : "perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)",
+        ? `perspective(1200px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) translateY(-1px)`
+        : "perspective(1200px) rotateX(0deg) rotateY(0deg) translateY(0px)",
     transition: isHovered
-      ? "transform 0.1s ease-out"
+      ? "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease"
       : "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease",
   };
 
