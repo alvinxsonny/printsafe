@@ -13,6 +13,9 @@ import {
   CheckCircle,
   AlertTriangle,
   Store,
+  Lock,
+  KeyRound,
+  CheckCircle2,
 } from "lucide-react";
 import {
   Button3D,
@@ -79,9 +82,9 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section - Fills viewport height before scrolling */}
-      <section className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden py-10 sm:py-14 lg:py-18 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           {/* Left Text Column */}
           <div className="lg:col-span-7 flex flex-col gap-6 text-center lg:text-left">
             <div className="flex items-center justify-center lg:justify-start">
@@ -143,26 +146,91 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right 3D Visual Column */}
+          {/* Right 3D Visual Column - Interactive Secure Terminal Preview */}
           <div className="lg:col-span-5 flex justify-center items-center relative">
-            <div className="relative w-full max-w-md aspect-square flex items-center justify-center">
+            <div className="relative w-full max-w-md flex items-center justify-center py-4">
               {/* Background Ambient Glow */}
-              <div className="absolute inset-0 bg-[#3DD68C]/15 rounded-full blur-3xl" />
+              <div className="absolute inset-0 bg-[var(--accent)]/15 rounded-full blur-3xl pointer-events-none -z-10" />
 
-              {/* 3D Tilted Card Preview */}
-              <Card3D className="w-full max-w-sm flex flex-col items-center p-8 bg-[var(--surface)] relative z-10">
-                <PaperStackIllustration className="w-44 h-44 mb-4 drop-shadow-lg" />
-                <div className="w-full flex items-center justify-between p-3 rounded-2xl bg-[var(--surface-2)] border border-[var(--border)] mb-3">
-                  <span className="text-xs font-bold text-[var(--text)]">
-                    Document #PS-8821
-                  </span>
+              {/* Floating Satellite 1: Top Right */}
+              <div className="absolute -top-2 -right-2 sm:-right-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--border)] extrude-sm shadow-md">
+                <ShieldCheck className="w-4 h-4 text-[var(--accent)] shrink-0" />
+                <span className="text-[11px] font-bold text-[var(--text)] whitespace-nowrap">
+                  No Downloads &bull; Memory Stream
+                </span>
+              </div>
+
+              {/* Floating Satellite 2: Bottom Left */}
+              <div className="absolute -bottom-2 -left-2 sm:-left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--border)] extrude-sm shadow-md">
+                <Clock className="w-4 h-4 text-[var(--warm)] shrink-0" />
+                <span className="text-[11px] font-bold text-[var(--text)] whitespace-nowrap">
+                  Auto-Destruct &bull; 29:58 min
+                </span>
+              </div>
+
+              {/* Main 3D Secure Terminal Card */}
+              <Card3D className="w-full max-w-sm p-6 bg-[var(--surface)] border border-[var(--border)] extrude-lg relative z-10">
+                {/* Mini Terminal Window Titlebar */}
+                <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)] mb-4">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-400/80 inline-block" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400/80 inline-block" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400/80 inline-block" />
+                    <span className="text-[11px] font-mono text-[var(--text-muted)] ml-2 font-semibold">
+                      vault://aadhaar_card.enc
+                    </span>
+                  </div>
                   <Badge variant="live" size="sm">
-                    Watermarked
+                    AES-256
                   </Badge>
                 </div>
-                <div className="w-full flex items-center justify-between text-xs text-[var(--text-muted)] font-medium">
-                  <span>Alias: Customer A7F2</span>
-                  <span className="tabular-nums">Code: • • • •</span>
+
+                {/* Simulated Watermarked Document View */}
+                <div className="relative rounded-xl bg-[var(--surface-2)] border border-[var(--border)] p-4 overflow-hidden flex flex-col gap-3 min-h-[160px] justify-between">
+                  {/* Forensic Dynamic Watermark Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-20 -rotate-12">
+                    <span className="text-[10px] font-mono font-bold tracking-widest text-[var(--text)] uppercase whitespace-nowrap">
+                      CONFIDENTIAL &bull; OPERATOR #82 &bull; CUSTOMER A7F2
+                      &bull; VIEW ONLY
+                    </span>
+                  </div>
+
+                  {/* Document Skeleton Content */}
+                  <div className="space-y-2 relative z-10">
+                    <div className="flex items-center justify-between">
+                      <div className="h-3.5 w-24 rounded bg-[var(--text)]/20" />
+                      <div className="h-5 w-8 rounded bg-[var(--accent-fill)]/20 border border-[var(--accent-fill-darker)]/30 flex items-center justify-center">
+                        <Lock className="w-2.5 h-2.5 text-[var(--accent)]" />
+                      </div>
+                    </div>
+                    <div className="h-2 w-full rounded bg-[var(--text-muted)]/20" />
+                    <div className="h-2 w-4/5 rounded bg-[var(--text-muted)]/20" />
+                    <div className="h-2 w-3/5 rounded bg-[var(--text-muted)]/20" />
+                  </div>
+
+                  {/* Watermark Status Line */}
+                  <div className="relative z-10 flex items-center justify-between pt-2 border-t border-[var(--border)]/60 text-[10px] font-mono text-[var(--text-muted)]">
+                    <span className="flex items-center gap-1 text-[var(--accent)] font-bold">
+                      <CheckCircle2 className="w-3 h-3" /> Forensic Watermark
+                    </span>
+                    <span>1 Page &bull; Color</span>
+                  </div>
+                </div>
+
+                {/* Handover Code Strip */}
+                <div className="mt-4 pt-3 border-t border-[var(--border)] flex items-center justify-between gap-3">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">
+                      Counter Handover Code
+                    </span>
+                    <span className="text-xs font-extrabold text-[var(--text)]">
+                      Customer A7F2
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-xs font-mono font-black text-[var(--text)] tracking-widest extrude-sm">
+                    <KeyRound className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
+                    8 8 2 1
+                  </div>
                 </div>
               </Card3D>
             </div>
